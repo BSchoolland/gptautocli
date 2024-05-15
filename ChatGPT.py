@@ -2,6 +2,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from runTerminalCommands import ShellSession
+import argparse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -46,18 +47,24 @@ def get_gpt_response(prompt, model="gpt-3.5-turbo"):
 
     return response_message
 
+
+
 def main():
-    print("Welcome to the GPT Command Line Chat!")
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", action="store_true", help="Use GPT-4o instead of GPT-3.5 Turbo")
+    args = parser.parse_args()
+    goal = "<--BEGIN GOAL-->" + input("Please enter your goal: ") + " <--END GOAL-->"
     shell = ShellSession()
     shell_result = shell.run_command('pwd')
     # add the user's goal to the conversation history
-    goal = "<--BEGIN GOAL-->" + input("Please enter your goal: ") + " <--END GOAL-->"
     conversation_history[0]["content"] += goal
     while True:
         try:
-            response = get_gpt_response(shell_result, model="gpt-4o")
-            
-            print(f"GPT-3.5 Turbo: {response}")
+            model = "gpt-4o" if args.s else "gpt-3.5-turbo"
+            response = get_gpt_response(shell_result, model=model)
+
+            print(f"{model}: {response}")
             if response.startswith("PROGRAM COMPLETE:"):
                 print("Program complete. Exiting...")
                 break
@@ -65,6 +72,7 @@ def main():
             # input("Press Enter to continue...")
             # run the next command
             shell_result = shell.run_command(response)
+            print(shell_result)
             
         except Exception as e:
             print(f"Error: {e}")
