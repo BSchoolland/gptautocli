@@ -1,0 +1,7 @@
+setup.cfg
+setup.py
+AI_Tasks.egg-info/PKG-INFO
+AI_Tasks.egg-info/SOURCES.txt
+AI_Tasks.egg-info/dependency_links.txt
+AI_Tasks.egg-info/requires.txt
+AI_Tasks.egg-info/top_level.txt
