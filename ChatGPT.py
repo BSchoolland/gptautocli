@@ -21,7 +21,7 @@ MAX_HISTORY_LENGTH = 20
 
 # Initialize the conversation history
 conversation_history = [
-    {"role": "system", "content": "You are designed to work with the linux terminal.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT PROVIDE MULTIPLE LINES AT ONCE. DO NOT TRY TO USE TOOLS LIKE NANO OR VI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'PROGRAM COMPLETE: (short description of what happened)' to end the program. Your goal is set by the user and is as follows: "},
+    {"role": "system", "content": "You are designed to work with the linux terminal.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT PROVIDE MULTIPLE LINES AT ONCE. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: "},
 ]
 
 # Set a limit on the number of messages in the conversation history
@@ -50,7 +50,6 @@ def get_gpt_response(prompt, model="gpt-3.5-turbo"):
 
 
 def main():
-    
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", action="store_true", help="Use GPT-4o instead of GPT-3.5 Turbo")
     args = parser.parse_args()
@@ -65,17 +64,22 @@ def main():
             response = get_gpt_response(shell_result, model=model)
 
             print(f"{model}: {response}")
-            if response.startswith("PROGRAM COMPLETE:"):
+            if response.startswith("EXIT:"):
                 print("Program complete. Exiting...")
                 break
             # wait for the user to press enter before running the next command
             # input("Press Enter to continue...")
             # run the next command
-            shell_result = shell.run_command(response)
+            shell_result = ""
+            try:
+                shell_result = shell.run_command(response)
+            except Exception as e:
+                print(e)
+                shell_result = "Unknown error! Something may have gone wrong with the simulated terminal session!"
             print(shell_result)
             
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error: {type(e).__name__}, {str(e)}")
             # exit the loop on error
             break
 

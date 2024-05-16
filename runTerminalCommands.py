@@ -2,6 +2,14 @@ import subprocess
 import threading
 import queue
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get your OpenAI API key from the environment variables
+sudo_passwd = os.getenv("SUDO_PASSWD")
+
 
 class ShellSession:
     def __init__(self):
@@ -54,29 +62,43 @@ class ShellSession:
         
         # Read the output until we detect the next prompt
         output = []
+        output.append(prompt + command)
         while True:
             try:
                 line = self.stdout_queue.get(timeout=1)
-                if line.strip() == command:  # Ignore the echo of the command
+                # Ignore the echo of the command
+                if line.strip() == command:
                     continue
-                if line.strip().endswith('$ '):  # Assuming a prompt ends with '$ '
+                # Assuming a prompt ends with '$ '
+                if line.strip().endswith('$ '):
                     break
+                if "password for" in line:
+                    self.process.stdin.write(sudo_passwd + '\n')
+                    self.process.stdin.flush()
+                elif "Do you want to continue?" in line:
+                    self.process.stdin.write('Y\n')
+                    self.process.stdin.flush()
+                print('line: ', line)
                 output.append(line)
             except queue.Empty:
                 break
 
         # Check for any errors
-        errors = []
-        while True:
-            try:
-                error_line = self.stderr_queue.get_nowait()
-                errors.append(error_line)
-            except queue.Empty:
-                break
-
-        if errors:
-            return ''.join(errors)
-        return ''.join(output)
+        # errors = []
+        # while True:
+        #     try:
+        #         error_line = self.stderr_queue.get_nowait()
+        #         errors.append(error_line)
+        #     except queue.Empty:
+        #         break
+        # join the output into a single string
+        string = ''
+        for i in output:
+            string += i
+            string += '\n'
+        # if errors:
+        #     return ''.join(errors).join('\n')
+        return string
 
     def close(self):
         # Close the process
@@ -88,5 +110,5 @@ class ShellSession:
 # Sample usage
 if __name__ == '__main__':
     shell = ShellSession()
-    print(shell.run_command('ls'))
+    print(shell.run_command('sudo apt-get install ruby'))
     shell.close()
