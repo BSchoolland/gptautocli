@@ -55,7 +55,7 @@ def main():
     args = parser.parse_args()
     goal = "<--BEGIN GOAL-->" + input("Please enter your goal: ") + " <--END GOAL-->"
     shell = ShellSession()
-    shell_result = shell.run_command('pwd')
+    shell_result = shell.run_command('ls')
     # add the user's goal to the conversation history
     conversation_history[0]["content"] += goal
     while True:
@@ -76,7 +76,7 @@ def main():
             except Exception as e:
                 print(e)
                 shell_result = "Unknown error! Something may have gone wrong with the simulated terminal session!"
-            print(shell_result)
+            # print(shell_result)
             
         except Exception as e:
             print(f"Error: {type(e).__name__}, {str(e)}")
