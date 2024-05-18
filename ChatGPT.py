@@ -145,7 +145,8 @@ def introduction():
         f"{RED}{BOLD}Disclaimer:{RESET} {YELLOW}This program has not been extensively tested "
         f"and is {BOLD}NOT SAFE{RESET}{YELLOW} to use outside of a virtual machine or other isolated environment. "
         f"ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving {RED}{BOLD}FULL CONTROL{RESET}{YELLOW} of your terminal if you proceed. "
-        f"The developer of this program is not responsible for any damage caused by the use of this program.{RESET}\n"
+        f"The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"
+        f"{ITALIC}You can use Control-C to exit the program at any time, although the AI does type pretty fast...{RESET}\n"
     )
     current_dir = os.getcwd()
     print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using: {model} model.\n  Current directory: {current_dir}\n")
