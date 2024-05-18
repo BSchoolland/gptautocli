@@ -22,7 +22,6 @@ class ShellSession:
         os.close(slave)
 
     def run_command(self, command):
-        self.command_counter += 1
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
         # Send command
         os.write(self.master_fd, (command + "; echo " + end_tag + "\n").encode('utf-8'))
