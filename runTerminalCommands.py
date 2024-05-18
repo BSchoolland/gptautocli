@@ -2,13 +2,7 @@ import subprocess
 import threading
 import queue
 import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Get your OpenAI API key from the environment variables
-sudo_passwd = os.getenv("SUDO_PASSWD")
+import time
 
 
 class ShellSession:
@@ -20,7 +14,8 @@ class ShellSession:
             stderr=subprocess.PIPE, 
             text=True, 
             bufsize=1,
-            universal_newlines=True
+            universal_newlines=True,
+            env={"PS1": "$ "}
         )
         self.stdout_queue = queue.Queue()
         self.stderr_queue = queue.Queue()
@@ -30,6 +25,7 @@ class ShellSession:
         self.stderr_thread.daemon = True
         self.stdout_thread.start()
         self.stderr_thread.start()
+        self.command_counter = 0
 
     def _enqueue_output(self, out, queue):
         for line in iter(out.readline, ''):
@@ -54,50 +50,40 @@ class ShellSession:
 
     def run_command(self, command):
         prompt = self.get_prompt()
-        # Print the prompt and the command
-        print(prompt + command)
-        # Send the command to the shell
-        self.process.stdin.write(command + '\n')
+        # Send the command to the shell but add a custom start and end token
+        self.command_counter += 1
+        print(command)
+        self.process.stdin.write(command  + "; echo COMMAND_DONE_TAG" + str(self.command_counter) + '\n')
         self.process.stdin.flush()
-        
+        # wairt a short time to ensure some output is available
+        # before we start reading it
+        time.sleep(0.1)
         # Read the output until we detect the next prompt
         output = []
         output.append(prompt + command)
         while True:
             try:
-                line = self.stdout_queue.get(timeout=1)
+                line = self.stdout_queue.get(timeout=3)
+                
                 # Ignore the echo of the command
                 if line.strip() == command:
                     continue
                 # Assuming a prompt ends with '$ '
-                if line.strip().endswith('$ '):
+                if line == 'COMMAND_DONE_TAG' + str(self.command_counter) + '\n':
+                    print('command done!')
                     break
-                if "password for" in line:
-                    self.process.stdin.write(sudo_passwd + '\n')
-                    self.process.stdin.flush()
-                elif "Do you want to continue?" in line:
-                    self.process.stdin.write('Y\n')
-                    self.process.stdin.flush()
-                print('line: ', line)
+                print('line: ', line)                
                 output.append(line)
             except queue.Empty:
-                break
-
-        # Check for any errors
-        # errors = []
-        # while True:
-        #     try:
-        #         error_line = self.stderr_queue.get_nowait()
-        #         errors.append(error_line)
-        #     except queue.Empty:
-        #         break
-        # join the output into a single string
+                # FIXME: This is a hack to handle the case where we need to confirm a package installation
+                # This assumes we've hit a confirmation prompt, although we have no way of knowing that yet as we don't have the line 
+                self.process.stdin.write('Y\n')
+                self.process.stdin.flush()
+                
         string = ''
         for i in output:
             string += i
             string += '\n'
-        # if errors:
-        #     return ''.join(errors).join('\n')
         return string
 
     def close(self):
@@ -110,5 +96,8 @@ class ShellSession:
 # Sample usage
 if __name__ == '__main__':
     shell = ShellSession()
-    print(shell.run_command('sudo apt-get install ruby'))
+    print(shell.run_command('echo "hello world"'))
+    # run a command that requires sudo
+    print(shell.run_command('sudo npx create-react-app my-app'))
+
     shell.close()
