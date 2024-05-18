@@ -27,3 +27,6 @@ def get_terminal_type():
         return 'cmd'
     else:
         return 'unknown'
+
+def get_os_type():
+    return platform.system()

@@ -31,7 +31,7 @@ def run_in_new_terminal(command):
         raise Exception("Unsupported terminal or operating system.")
 
 if __name__ == "__main__":
-    script_name = "./ChatGPT.py"
+    script_name = "/home/ben/personal/AI_Tasks/ChatGPT.py"
     args = ' '.join(sys.argv[1:])  # All arguments except the script name itself
     command = f"python3 {script_name} {args}"
     run_in_new_terminal(command)

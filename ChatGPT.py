@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from shellSimulator import ShellSession
 import argparse
+from getTerminal import get_terminal_type, get_os_type
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,10 +28,12 @@ CYAN = "\033[36m"
 
 MAX_HISTORY_LENGTH = 20 
 
-
+# get os and terminal type
+osType = get_os_type()
+terminalType = get_terminal_type()
 # Initialize the conversation history
 conversation_history = [
-    {"role": "system", "content": "You are designed to work with the linux terminal.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: No goal defined, exit the program!"},
+    {"role": "system", "content": f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: No goal defined, exit the program!"},
 ]
 
 # Set a limit on the number of messages in the conversation history
@@ -59,7 +62,9 @@ def get_gpt_response(prompt, model="gpt-3.5-turbo"):
 def setGoal(goal):
     goal = f"<--BEGIN GOAL-->{goal}<--END GOAL-->"
     print(f"Goal set to: {goal}")
-    conversation_history[0]["content"] = "You are designed to work with the linux terminal.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: " + goal
+    osType = get_os_type()
+    terminalType = get_terminal_type()
+    conversation_history[0]["content"] = f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: " + goal
     
     
 
