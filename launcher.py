@@ -2,6 +2,8 @@ import sys
 import subprocess
 from getTerminal import get_terminal_type
 import os
+import argparse
+
 def is_inside_vscode():
     if os.getenv('TERM_PROGRAM') == 'vscode':
         return True
@@ -31,6 +33,16 @@ def run_in_new_terminal(command):
         raise Exception("Unsupported terminal or operating system.")
 
 if __name__ == "__main__":
+    # set up the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", action='store_true', help="Use the GPT-4o model instead of the GPT-3.5 Turbo model")
+    # could potentially add these options in the future
+    # parser.add_argument("-l", action='store_true', help="Long context mode, keeps conversation history for more than 20 messages")
+    # parser.add_argument("-p", action='store_true', help="Persist the terminal session after the script ends")
+    # if -h or --help is passed, print the help message and exit
+    if "-h" in sys.argv or "--help" in sys.argv:
+        parser.print_help()
+        sys.exit(0)
     script_name = "/home/ben/personal/AI_Tasks/ChatGPT.py"
     args = ' '.join(sys.argv[1:])  # All arguments except the script name itself
     command = f"python3 {script_name} {args}"

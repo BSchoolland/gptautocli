@@ -5,8 +5,30 @@ import select
 import time
 import getpass
 
+# parent class for all opperating systems
 class ShellSession:
     def __init__(self):
+        self.command_counter = 0
+    # same for all opperating systems
+    def is_command_allowed(self, command):
+        # list of disallowed commands: nano, vi, vim FIXME: add windows and mac commands
+        disallowed_commands = ["nano", "vi", "vim"]
+        for disallowed_command in disallowed_commands:
+            if command.startswith(disallowed_command):
+                return f"TERMINAL ERROR: Command '{disallowed_command}' is not allowed. Please try using an alternative command ex: 'echo instead of nano'."
+        # make sure the command does not include ``` bash or ```shell
+        if "```" in command:
+            return "TERMINAL ERROR: More than just the command was entered. Please use 'command' and NOT ``` shell command ```."
+        return "Yes"
+    # to be implemented by the child classes
+    def run_command(self, command):
+        pass
+    def close(self):
+        pass
+
+class LinuxOrMacShellSession(ShellSession):
+    def __init__(self):
+        super().__init__()
         master, slave = pty.openpty()
         self.process = subprocess.Popen(
             ['/bin/bash'],
@@ -17,19 +39,8 @@ class ShellSession:
             preexec_fn=os.setsid
         )
         self.master_fd = master
-        self.command_counter = 0
-
         os.close(slave)
-    def is_command_allowed(self, command):
-        # list of disallowed commands: nano, vi, vim
-        disallowed_commands = ["nano", "vi", "vim"]
-        for disallowed_command in disallowed_commands:
-            if command.startswith(disallowed_command):
-                return f"TERMINAL ERROR: Command '{disallowed_command}' is not allowed. Please try using an alternative command ex: 'echo instead of nano'."
-        # make sure the command does not include ``` bash or ```shell
-        if "```" in command:
-            return "TERMINAL ERROR: More than just the command was entered. Please use 'command' and NOT ``` bash command ```."
-        return "Yes"
+    
 
     def run_command(self, command):
         # check if the command is allowed
@@ -98,13 +109,62 @@ class ShellSession:
             os.close(self.master_fd)
             self.process.wait()
 
+
+class WindowsShellSession(ShellSession):
+    def __init__(self):
+        super().__init__()
+        self.process = subprocess.Popen(
+            'cmd.exe',
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+
+    def run_command(self, command):
+        # Check if the command is allowed
+        command_status = self.is_command_allowed(command)
+        if command_status != "Yes":
+            return command_status
+        
+        end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
+        # Send command
+        self.process.stdin.write(command + "\n")
+        self.process.stdin.write(f"echo {end_tag}\n")
+        self.process.stdin.flush()
+
+        output = []
+        # Continue reading while the subprocess is running
+        while True:
+            line = self.process.stdout.readline()
+            if not line:
+                break  # No more output
+            if end_tag in line:
+                break  # Command output finished
+            print(line, end='')  # Optionally print output in real-time
+            output.append(line)
+        
+        result = ''.join(output)
+        # limit the output to 1000 characters
+        if len(result) > 1000:
+            print("Output too long. Truncating...")
+            result = result[:500] + "... content truncated ..." + result[-500:]
+        return result
+
+    def close(self):
+        if self.process:
+            self.process.stdin.write("exit\n")
+            self.process.stdin.flush()
+            time.sleep(1)  # Give time for the exit command to process
+            self.process.terminate()
+            self.process.wait()
+
+
+
 if __name__ == '__main__':
     print("<--BEGIN AUTOMATED TERMINAL SESSION-->")
-    shell = ShellSession()
-    shell.run_command('echo "hello world"')
-    # run a command with an error (history expansion)
-    result = shell.run_command('echo "!hello! world!"')
-    # run a command that requires sudo
+    shell = WindowsShellSession()
+    result = shell.run_command("dir")
     shell.close()
     print("<--END AUTOMATED TERMINAL SESSION-->")
     print(result)

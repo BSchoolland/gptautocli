@@ -1,7 +1,7 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-from shellSimulator import ShellSession
+from shellSimulator import LinuxOrMacShellSession, WindowsShellSession
 import argparse
 from getTerminal import get_terminal_type, get_os_type
 
@@ -25,6 +25,7 @@ RED = "\033[31m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
 CYAN = "\033[36m"
+GREEN = "\033[32m"
 
 MAX_HISTORY_LENGTH = 20 
 
@@ -70,8 +71,14 @@ def setGoal(goal):
 
 def terminalMode(goal, args):
     setGoal(goal)
-    shell = ShellSession()
-    shell_result = shell.run_command('ls')
+    osType = get_os_type()
+    # Create a shell session based on the OS type
+    shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
+    # Run the initial command
+    if osType == "Windows":
+        shell_result = shell.run_command("dir")
+    else:
+        shell_result = shell.run_command("ls")
     while True:
         try:
             model = "gpt-4o" if args.s else "gpt-3.5-turbo"
@@ -107,7 +114,7 @@ def chatMode(goal, args, initial_message=None):
     print(f"\n\n{BOLD}{CYAN}Starting chat session...{RESET}")
     print("You can now chat with the AI. Type 'exit' to end the chat session, or ask the AI to do something else.")
     # update the system message to say that the program has ended and the GPT is allowed to talk normally
-    conversation_history[0]["content"] = "Program complete, the goal was:" + goal + " You have been disconnected from the terminal and may now talk normally without worrying about errors. If the user asks you to use the terminal again, respond with 'CONNECT TO TERMINAL: <new goal>'"
+    conversation_history[0]["content"] = "Program complete, the goal was:" + goal + " Program complete. The goal was: install a package and run a script. You have been disconnected from the terminal and may now converse normally without worrying about errors. If you need to return to the terminal, you (the GPT) should simply respond with: `CONNECT TO TERMINAL: <task details>`. For example: `CONNECT TO TERMINAL: install a package and run a script`"
     while True:
         try:
             if initial_message:
@@ -128,11 +135,11 @@ def chatMode(goal, args, initial_message=None):
                     terminalMode(goal, args)
                     break
                 else:
-                    print("AI denied access to terminal.")
+                    print("AI access to terminal denied.")
             if model == "gpt-3.5-turbo":
                 print(f"{YELLOW}{BOLD}{model}: {RESET}{response}")
             else:
-                print(f"{RED}{BOLD}{model}: {RESET}{response}")
+                print(f"{GREEN}{BOLD}{model}: {RESET}{response}")
         except Exception as e:
             print(f"Error: {type(e).__name__}, {str(e)}")
             # exit the loop on error
@@ -154,7 +161,7 @@ def introduction():
         f"{ITALIC}You can use Control-C to exit the program at any time, although the AI does type pretty fast...{RESET}\n"
     )
     current_dir = os.getcwd()
-    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using: {model} model.\n  Current directory: {current_dir}\n")
+    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n")
     print(disclaimer)
     
     goal = input(f"{BOLD}Enter what you want the AI to do (q to cancel): {RESET}")
