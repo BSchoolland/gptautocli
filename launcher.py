@@ -16,7 +16,15 @@ def run_in_new_terminal(command):
         # If inside VS Code, prompt the user
         run = input("Running in VS Code. The script will have to run in this terminal window (not the normal method). Continue? (y/n): ")
         if run.lower() in ['y', 'yes']:
-            subprocess.run(['/bin/bash', '-c', command])
+            if terminal_type in ['gnome-terminal', 'konsole', 'xterm']:
+                # run the command in the current terminal using bash
+                subprocess.run(['/bin/bash', '-c', command])
+            elif terminal_type == 'cmd':
+                # run the command in the current terminal using cmd
+                subprocess.run(['cmd', '/c', command])
+            elif terminal_type in ['iterm', 'mac_terminal']:
+                # run the command in the current terminal using iTerm
+                subprocess.run(['open', '-a', terminal_type, '--args', '-e', command])
         else:
             print('To run normally, please run the script outside of VS Code.')
             return
