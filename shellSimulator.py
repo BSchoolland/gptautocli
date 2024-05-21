@@ -1,5 +1,4 @@
 import os
-import pty
 import subprocess
 import select
 import time
@@ -29,6 +28,7 @@ class ShellSession:
 class LinuxOrMacShellSession(ShellSession):
     def __init__(self):
         super().__init__()
+        import pty
         master, slave = pty.openpty()
         self.process = subprocess.Popen(
             ['/bin/bash'],

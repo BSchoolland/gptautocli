@@ -5,8 +5,8 @@ import os
 import argparse
 
 def is_inside_vscode():
-    if os.getenv('TERM_PROGRAM') == 'vscode':
-        return True
+    # if os.getenv('TERM_PROGRAM') == 'vscode':
+    #     return True
     return False
 
 def run_in_new_terminal(command):
