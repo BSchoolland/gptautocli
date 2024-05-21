@@ -34,7 +34,7 @@ def run_in_new_terminal(command):
     elif terminal_type == 'cmd':
         # Launch a new command prompt in Windows
         subprocess.Popen(["start", "cmd", "/k", command], shell=True)
-    elif terminal_type in ['iterm', 'mac_terminal', 'zsh']:
+    elif terminal_type in ['iterm', 'mac_terminal']:
         # Launch a new terminal window in macOS
         subprocess.Popen(['open', '-a', terminal_type, '--args', '-e', command])
     else:
