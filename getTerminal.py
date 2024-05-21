@@ -25,7 +25,7 @@ def get_terminal_type():
         elif os.path.exists('/bin/zsh'):
             return 'zsh'
         else:
-            return 'zsh'
+            return 'unknown'
     # Return a generic terminal type for Windows
     elif platform.system() == 'Windows':
         return 'cmd'
