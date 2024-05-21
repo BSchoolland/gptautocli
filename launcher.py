@@ -38,6 +38,7 @@ def run_in_new_terminal(command):
         # Launch a new terminal window in macOS
         subprocess.Popen(['open', '-a', terminal_type, '--args', '-e', command])
     else:
+        print("Unknown terminal type. Attempting to run the command in the current terminal window...")
         # attempt a catch-all method
         try:
             subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
