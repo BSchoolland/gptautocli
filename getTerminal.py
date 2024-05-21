@@ -21,6 +21,9 @@ def get_terminal_type():
             return 'iterm'
         elif os.path.exists('/Applications/Utilities/Terminal.app'):
             return 'mac_terminal'
+        # zsh is the default shell on macOS
+        elif os.path.exists('/bin/zsh'):
+            return 'zsh'
         else:
             return 'unknown'
     # Return a generic terminal type for Windows
