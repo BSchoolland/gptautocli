@@ -38,6 +38,7 @@ def run_in_new_terminal(command):
         # Launch a new terminal window in macOS
         subprocess.Popen(['open', '-a', terminal_type, '--args', '-e', command])
     else:
+        print("terminal type:", terminal_type, "os:", os.name)
         raise Exception("Unsupported terminal or operating system.")
 
 if __name__ == "__main__":
