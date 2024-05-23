@@ -4,6 +4,18 @@ from dotenv import load_dotenv
 from shellSimulator import LinuxOrMacShellSession, WindowsShellSession
 import argparse
 from getTerminal import get_terminal_type, get_os_type
+import time
+from colorama import init, Fore, Style
+
+# better terminal output
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import InMemoryHistory
+
+# set a session
+session = PromptSession(history=InMemoryHistory())
+
+# Initialize colorama
+init()
 
 # Load environment variables from .env file
 load_dotenv()
@@ -74,17 +86,21 @@ def terminalMode(goal, args):
     osType = get_os_type()
     # Create a shell session based on the OS type
     shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
-    # Run the initial command
+
     if osType == "Windows":
         shell_result = shell.run_command("dir")
     else:
         shell_result = shell.run_command("ls")
+
     while True:
         try:
             model = "gpt-4o" if args.s else "gpt-3.5-turbo"
             response = get_gpt_response(shell_result, model=model)
 
-            print(f"{model}: {response}")
+            if model == "gpt-3.5-turbo":
+                print(Fore.YELLOW + Style.BRIGHT + model + Style.RESET_ALL + ": " + response)
+            else:
+                print(Fore.GREEN + Style.BRIGHT + model + Style.RESET_ALL + ": " + response)
             if response.startswith("EXIT:"):
                 print("Program complete!")
                 break
@@ -94,52 +110,75 @@ def terminalMode(goal, args):
             shell_result = ""
             try:
                 shell_result = shell.run_command(response)
+            except KeyboardInterrupt:
+                # close the shell session, and make a new one
+                print(f"{Fore.RED}{Style.BRIGHT}Current command stopped, press ctrl+c again quickly to exit the program.{Style.RESET_ALL}")
+                shell.close()
+                shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
+                shell_result = "Command interrupted by user, likely due to it getting stuck or taking too long."
+                # wait 1 second to give the user a chance to exit the program
+                time.sleep(1)               
+                
+                
             except Exception as e:
                 print(e)
-                shell_result = "Unknown error! Something may have gone wrong with the simulated terminal session!"
-            # print(shell_result)
+                shell_result = "Unknown error! Something may have gone wrong with the simulated terminal session! Automatically restarting the terminal session...  If this error persists, please exit the program"
+                # close the shell session, and make a new one
+                print(f"{Fore.RED}{Style.BRIGHT}Error occurred, restarting terminal session... If you want to exit the program, press ctrl+c{Style.RESET_ALL}")
+                shell.close()
+                shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
+                # wait 1 second to give the user a chance to exit the program
+                
+                time.sleep(1)
+            
             
         except Exception as e:
             print(f"Error: {type(e).__name__}, {str(e)}")
             # exit the loop on error
             break
     # close the program unless the user wants to chat
-    chat = input("Press Enter to exit, or type a message to chat with the AI: ")
+    chat = session.prompt("Press Enter to exit, or type a message to chat with the AI: ")
     if chat == "" or chat == "exit" or chat == "quit" or chat == "q":
         return
     else:
         chatMode(goal, args, initial_message=chat)
     
 def chatMode(goal, args, initial_message=None):
-    print(f"\n\n{BOLD}{CYAN}Starting chat session...{RESET}")
+    print(Fore.CYAN + Style.BRIGHT + "\n\nStarting chat session..." + Style.RESET_ALL)
     print("You can now chat with the AI. Type 'exit' to end the chat session, or ask the AI to do something else.")
     # update the system message to say that the program has ended and the GPT is allowed to talk normally
-    conversation_history[0]["content"] = "Program complete, the goal was:" + goal + " Program complete. The goal was: install a package and run a script. You have been disconnected from the terminal and may now converse normally without worrying about errors. If you need to return to the terminal, you (the GPT) should simply respond with: `CONNECT TO TERMINAL: <task details>`. For example: `CONNECT TO TERMINAL: install a package and run a script`"
+    conversation_history[0]["content"] = "Program complete, the goal was:" + goal + " Program complete. The goal was: install a package and run a script. You have been disconnected from the terminal and may now converse normally without worrying about errors. If you need to return to the terminal, you (the GPT) should simply respond with: `CONNECT TO TERMINAL: <task details>`. For example: `let's go back to the terminal and complete your new goal! CONNECT TO TERMINAL: install a package and run a script`"
     while True:
         try:
             if initial_message:
                 user_input = initial_message
                 initial_message = None
-                print(f"{BOLD}{CYAN}You: {RESET}{user_input}")
+                print(f"{Fore.CYAN}{Style.BRIGHT}You: {Style.RESET_ALL}{user_input}")
             else:
-                user_input = input(f"{BLUE}{BOLD}You: {RESET}")
+                print(f"{Fore.CYAN}{Style.BRIGHT}You: {Style.RESET_ALL}", end="")
+                user_input = session.prompt('')
                 if user_input.lower() == "exit":
                     break
             model = "gpt-4o" if args.s else "gpt-3.5-turbo"
             response = get_gpt_response(user_input, model=model)
-            if response.startswith("CONNECT TO TERMINAL:"):
-                goal = response.replace("CONNECT TO TERMINAL: ", "")
-                print(f"{BOLD}{CYAN}AI requested to connect to terminal with goal: {goal}{RESET}")
-                answer = input(f"{BOLD}Allow? (y/n): {RESET}")
+            if "CONNECT TO TERMINAL:" in response:
+                message = response.split("CONNECT TO TERMINAL: ")[0]                
+                goal = response.split("CONNECT TO TERMINAL: ")[1]
+                if (not message == ""):
+                    print(f"{Style.BRIGHT}{Fore.CYAN}AI: {Style.RESET_ALL}{message}")
+                # goal = response.replace("CONNECT TO TERMINAL: ", "")
+                print(f"{Style.BRIGHT}{Fore.CYAN}AI requested to connect to terminal with goal: {goal}{Style.RESET_ALL}")
+                print((f"{Fore.WHITE}{Style.BRIGHT}Allow? (y/n): {Style.RESET_ALL}"), end="")
+                answer = session.prompt('')
                 if answer.lower() == "y":
                     terminalMode(goal, args)
                     break
                 else:
                     print("AI access to terminal denied.")
             if model == "gpt-3.5-turbo":
-                print(f"{YELLOW}{BOLD}{model}: {RESET}{response}")
+                print(f"{Fore.YELLOW}{Style.BRIGHT}{model}: {Style.RESET_ALL}{response}")
             else:
-                print(f"{GREEN}{BOLD}{model}: {RESET}{response}")
+                print(f"{Fore.GREEN}{Style.BRIGHT}{model}: {Style.RESET_ALL}{response}")
         except Exception as e:
             print(f"Error: {type(e).__name__}, {str(e)}")
             # exit the loop on error
@@ -153,18 +192,16 @@ def introduction():
     model = "GPT-4o" if args.s else "GPT-3.5 Turbo"
 
     # Disclaimer
-    disclaimer = (
-        f"{RED}{BOLD}Disclaimer:{RESET} {YELLOW}This program has not been extensively tested "
-        f"and is {BOLD}NOT SAFE{RESET}{YELLOW} to use outside of a virtual machine or other isolated environment. "
-        f"ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving {RED}{BOLD}FULL CONTROL{RESET}{YELLOW} of your terminal if you proceed. "
-        f"The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"
-        f"{ITALIC}You can use Control-C to exit the program at any time, although the AI does type pretty fast...{RESET}\n"
-    )
+    
     current_dir = os.getcwd()
     print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n")
-    print(disclaimer)
+    try:
+        print(Fore.RED + Style.BRIGHT + "Disclaimer: " + Style.RESET_ALL + Fore.YELLOW + "This program has not been extensively tested and is " + Style.BRIGHT + "NOT SAFE" + Style.RESET_ALL + Fore.YELLOW + " to use outside of a virtual machine or other isolated environment. ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving " + Fore.RED + Style.BRIGHT + "FULL CONTROL" + Style.RESET_ALL + Fore.YELLOW + " of your terminal if you proceed. The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"  + "You can use Control-C to exit the program at any time, although the AI does type pretty fast..." + Style.RESET_ALL + "\n")
+    except Exception as e:
+        print(f"Error: {type(e).__name__}, {str(e)}")
     
-    goal = input(f"{BOLD}Enter what you want the AI to do (q to cancel): {RESET}")
+    print(f"{Style.BRIGHT}Enter what you want the AI to do (q to cancel): {Style.RESET_ALL}")
+    goal = session.prompt('> ')
     if goal == "" or goal == "exit" or goal == "quit" or goal == "q":
         # exit the program
         return
