@@ -11,7 +11,8 @@ def is_inside_vscode():
 
 def run_in_new_terminal(command):
     terminal_type = get_terminal_type()
-
+    # add a read command to keep the terminal open for debugging
+    # command += "; read -p 'Press Enter to continue...'"
     if is_inside_vscode():
         # If inside VS Code, prompt the user
         run = input("Running in VS Code. The script will have to run in this terminal window (not the normal method). Continue? (y/n): ")
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     if "-h" in sys.argv or "--help" in sys.argv:
         parser.print_help()
         sys.exit(0)
-    script_name = "/home/ben/personal/AI_Tasks/ChatGPT.py"
+    script_name = "./ChatGPT.py"
     args = ' '.join(sys.argv[1:])  # All arguments except the script name itself
     command = f"python3 {script_name} {args}"
     run_in_new_terminal(command)

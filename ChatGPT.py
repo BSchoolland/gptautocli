@@ -78,20 +78,27 @@ def setGoal(goal):
     osType = get_os_type()
     terminalType = get_terminal_type()
     conversation_history[0]["content"] = f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: " + goal
-    
-    
-
+# main function for terminal mode
 def terminalMode(goal, args):
     setGoal(goal)
     osType = get_os_type()
     # Create a shell session based on the OS type
     shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
+    # Run the terminal loop
+    terminalLoop(args, shell)
+    # close the program unless the user wants to chat
+    chat = session.prompt("Press Enter to exit, or type a message to chat with the AI: ")
+    if chat == "" or chat == "exit" or chat == "quit" or chat == "q":
+        return
+    else:
+        chatMode(goal, args, initial_message=chat)
 
+# A loop that allows the AI to interact with the terminal
+def terminalLoop(args, shell, safe_mode=False):
     if osType == "Windows":
         shell_result = shell.run_command("dir")
     else:
         shell_result = shell.run_command("ls")
-
     while True:
         try:
             model = "gpt-4o" if args.s else "gpt-3.5-turbo"
@@ -105,7 +112,8 @@ def terminalMode(goal, args):
                 print("Program complete!")
                 break
             # wait for the user to press enter before running the next command
-            # input("Press Enter to continue...")
+            if safe_mode:
+                input("Press Enter to continue...")
             # run the next command
             shell_result = ""
             try:
@@ -136,12 +144,7 @@ def terminalMode(goal, args):
             print(f"Error: {type(e).__name__}, {str(e)}")
             # exit the loop on error
             break
-    # close the program unless the user wants to chat
-    chat = session.prompt("Press Enter to exit, or type a message to chat with the AI: ")
-    if chat == "" or chat == "exit" or chat == "quit" or chat == "q":
-        return
-    else:
-        chatMode(goal, args, initial_message=chat)
+
     
 def chatMode(goal, args, initial_message=None):
     print(Fore.CYAN + Style.BRIGHT + "\n\nStarting chat session..." + Style.RESET_ALL)
