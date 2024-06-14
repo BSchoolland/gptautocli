@@ -1,11 +1,12 @@
 from openai import OpenAI
 import os
-from dotenv import load_dotenv
 from shellSimulator import LinuxOrMacShellSession, WindowsShellSession
 import argparse
 from getTerminal import get_terminal_type, get_os_type
 import time
 from colorama import init, Fore, Style
+from getpass import getpass
+import configparser
 
 # better terminal output
 from prompt_toolkit import PromptSession
@@ -17,15 +18,34 @@ session = PromptSession(history=InMemoryHistory())
 # Initialize colorama
 init()
 
-# Load environment variables from .env file
-load_dotenv()
+
 
 # Get your OpenAI API key from the environment variables
-api_key = os.getenv("OPENAI_API_KEY")
+config_path = os.path.expanduser('~/.myappconfig')
+config = configparser.ConfigParser()
 
-if not api_key:
-    print("Please set the OPENAI_API_KEY environment variable.")
-    exit(1)
+def setup_api_key():
+    if not os.path.exists(config_path):
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        print("First time setup detected.")
+        api_key = getpass("Please enter your OpenAI API key: ")
+        config['DEFAULT'] = {'OpenAI_API_Key': api_key}
+        with open(config_path, 'w') as configfile:
+            config.write(configfile)
+        print("API key saved successfully.")
+    else:
+        config.read(config_path)
+
+def get_api_key():
+    if 'OpenAI_API_Key' in config['DEFAULT']:
+        return config['DEFAULT']['OpenAI_API_Key']
+    else:
+        print("API key not found. Please run the setup process again.")
+        exit(1)
+
+# Initial setup
+setup_api_key()
+api_key = get_api_key()
 
 client = OpenAI(api_key=api_key)
 
@@ -77,6 +97,8 @@ def setGoal(goal):
     print(f"Goal set to: {goal}")
     osType = get_os_type()
     terminalType = get_terminal_type()
+    if terminalType == "unknown":
+        terminalType = "the default terminal for your OS"
     conversation_history[0]["content"] = f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: " + goal
 # main function for terminal mode
 def terminalMode(goal, args):
@@ -197,7 +219,7 @@ def introduction():
     # Disclaimer
     
     current_dir = os.getcwd()
-    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n")
+    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n Detected OS: {osType}")
     try:
         print(Fore.RED + Style.BRIGHT + "Disclaimer: " + Style.RESET_ALL + Fore.YELLOW + "This program has not been extensively tested and is " + Style.BRIGHT + "NOT SAFE" + Style.RESET_ALL + Fore.YELLOW + " to use outside of a virtual machine or other isolated environment. ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving " + Fore.RED + Style.BRIGHT + "FULL CONTROL" + Style.RESET_ALL + Fore.YELLOW + " of your terminal if you proceed. The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"  + "You can use Control-C to exit the program at any time, although the AI does type pretty fast..." + Style.RESET_ALL + "\n")
     except Exception as e:
