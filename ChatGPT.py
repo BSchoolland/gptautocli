@@ -15,24 +15,68 @@ from prompt_toolkit.history import InMemoryHistory
 # set a session
 session = PromptSession(history=InMemoryHistory())
 
+
+# get os and terminal type
+osType = get_os_type()
+terminalType = get_terminal_type()
+MAX_HISTORY_LENGTH = 20 
+
+# Initialize the conversation history
+conversation_history = [
+    {"role": "system", "content": f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: No goal defined, exit the program!"},
+]
+
 # Initialize colorama
 init()
 
+def test_gpt_response(prompt, model="gpt-3.5-turbo", client=None):
+    # Add user input to the conversation history
+    conversation_history.append({"role": "user", "content": prompt})
 
+    # Trim the conversation history if it exceeds the maximum length
+    if len(conversation_history) > MAX_HISTORY_LENGTH:
+        conversation_history.pop(1)  # Remove the second element (index 1), keeping the system message
+    response = client.chat.completions.create(
+        model=model,
+        messages=conversation_history
+    )
+
+    # Get the response message
+    response_message = response.choices[0].message.content
+
+    # Add the response to the conversation history
+    conversation_history.append({"role": "assistant", "content": response_message})
+
+    return response_message
 
 # Get your OpenAI API key from the environment variables
-config_path = os.path.expanduser('~/.myappconfig')
+config_path = os.path.expanduser('~/.terminal_assistant_config')
 config = configparser.ConfigParser()
 
 def setup_api_key():
     if not os.path.exists(config_path):
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        print("First time setup detected.")
+        print(Fore.YELLOW + "First time setup detected." + Style.RESET_ALL)
+        print("Welcome to the AI terminal assistant! Before we begin, we need to set up your OpenAI API key.  If you don't have an API key, follow the instructions at [FIXME: CREATE DOCUMENTATION] to get one.")
         api_key = getpass("Please enter your OpenAI API key: ")
+        # confirm that the key works
+        client = OpenAI(api_key=api_key)
+        try:
+            response = test_gpt_response("Hello, World!", client=client)
+            if response:
+                print(Fore.GREEN + "API key verified successfully." + Style.RESET_ALL)
+            else:
+                print(Fore.RED + "API key verification failed (although the request did go through) this may be a more complex issue." + Style.RESET_ALL)
+                exit(1)
+        except Exception as e:
+            print(Fore.RED + "API key verification failed. Please check your API key and try again." + Style.RESET_ALL)
+            print(f"Error: {type(e).__name__}, {str(e)}")
+            exit(1)
+
         config['DEFAULT'] = {'OpenAI_API_Key': api_key}
         with open(config_path, 'w') as configfile:
             config.write(configfile)
-        print("API key saved successfully.")
+        print(Fore.GREEN + "API key saved successfully." + Style.RESET_ALL)
     else:
         config.read(config_path)
 
@@ -40,7 +84,7 @@ def get_api_key():
     if 'OpenAI_API_Key' in config['DEFAULT']:
         return config['DEFAULT']['OpenAI_API_Key']
     else:
-        print("API key not found. Please run the setup process again.")
+        print(Fore.RED + "API key not found. Please run the setup process again." + Style.RESET_ALL)
         exit(1)
 
 # Initial setup
@@ -48,6 +92,8 @@ setup_api_key()
 api_key = get_api_key()
 
 client = OpenAI(api_key=api_key)
+
+
 
 # ANSI escape codes for styling
 RESET = "\033[0m"
@@ -59,17 +105,6 @@ BLUE = "\033[34m"
 CYAN = "\033[36m"
 GREEN = "\033[32m"
 
-MAX_HISTORY_LENGTH = 20 
-
-# get os and terminal type
-osType = get_os_type()
-terminalType = get_terminal_type()
-# Initialize the conversation history
-conversation_history = [
-    {"role": "system", "content": f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: No goal defined, exit the program!"},
-]
-
-# Set a limit on the number of messages in the conversation history
 
 def get_gpt_response(prompt, model="gpt-3.5-turbo"):
     # Add user input to the conversation history
@@ -219,7 +254,7 @@ def introduction():
     # Disclaimer
     
     current_dir = os.getcwd()
-    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n Detected OS: {osType}")
+    print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}")
     try:
         print(Fore.RED + Style.BRIGHT + "Disclaimer: " + Style.RESET_ALL + Fore.YELLOW + "This program has not been extensively tested and is " + Style.BRIGHT + "NOT SAFE" + Style.RESET_ALL + Fore.YELLOW + " to use outside of a virtual machine or other isolated environment. ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving " + Fore.RED + Style.BRIGHT + "FULL CONTROL" + Style.RESET_ALL + Fore.YELLOW + " of your terminal if you proceed. The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"  + "You can use Control-C to exit the program at any time, although the AI does type pretty fast..." + Style.RESET_ALL + "\n")
     except Exception as e:
