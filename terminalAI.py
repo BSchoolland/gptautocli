@@ -1,1 +1,0 @@
-# Allows the AI to send commands to the terminal and receive the output
