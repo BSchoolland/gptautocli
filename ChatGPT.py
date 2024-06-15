@@ -1,3 +1,4 @@
+import configparser
 from openai import OpenAI
 import os
 from shellSimulator import LinuxOrMacShellSession, WindowsShellSession
@@ -6,7 +7,6 @@ from getTerminal import get_terminal_type, get_os_type
 import time
 from colorama import init, Fore, Style
 from getpass import getpass
-import configparser
 
 # better terminal output
 from prompt_toolkit import PromptSession
@@ -58,7 +58,7 @@ def setup_api_key():
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
         print(Fore.YELLOW + "First time setup detected." + Style.RESET_ALL)
         print("Welcome to the AI terminal assistant! Before we begin, we need to set up your OpenAI API key.  If you don't have an API key, follow the instructions at [FIXME: CREATE DOCUMENTATION] to get one.")
-        api_key = getpass("Please enter your OpenAI API key: ")
+        api_key = input("Please enter your OpenAI API key: ")
         # confirm that the key works
         client = OpenAI(api_key=api_key)
         try:
@@ -136,29 +136,28 @@ def setGoal(goal):
         terminalType = "the default terminal for your OS"
     conversation_history[0]["content"] = f"You are designed to work on OS: {osType} with terminal: {terminalType}.  You will be provided with terminal output at each step and will be expected to do nothing except provide the next command.  DO NOT PROVIDE ANY TEXT THAT IS NOT A COMMAND AS IT WILL BE ENTERED INTO THE TERMINAL AND MAY CAUSE ERRORS.  DO NOT SURROUND COMMANDS IN CODE BLOCKS AS THE ``` WILL BE ENTERED INTO THE COMMAND LINE AND CAUSE ERRORS. DO NOT TRY TO USE TOOLS LIKE NANO OR VI OR ACCESS ANY FORM OF GUI SINCE THESE WILL NOT FUNCTION CORRECTLY. You will only be able to enter commands. Once you have completed the goal or run into an unsolvable issue, type 'EXIT: (short description of what happened), success or failure' to end the program. Your goal is set by the user and is as follows: " + goal
 # main function for terminal mode
-def terminalMode(goal, args):
+def terminalMode(goal, model):
     setGoal(goal)
     osType = get_os_type()
     # Create a shell session based on the OS type
     shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
     # Run the terminal loop
-    terminalLoop(args, shell)
+    terminalLoop(model, shell)
     # close the program unless the user wants to chat
     chat = session.prompt("Press Enter to exit, or type a message to chat with the AI: ")
     if chat == "" or chat == "exit" or chat == "quit" or chat == "q":
         return
     else:
-        chatMode(goal, args, initial_message=chat)
+        chatMode(goal, model, initial_message=chat)
 
 # A loop that allows the AI to interact with the terminal
-def terminalLoop(args, shell, safe_mode=False):
+def terminalLoop(model, shell, safe_mode=False):
     if osType == "Windows":
         shell_result = shell.run_command("dir")
     else:
         shell_result = shell.run_command("ls")
     while True:
         try:
-            model = "gpt-4o" if args.s else "gpt-3.5-turbo"
             response = get_gpt_response(shell_result, model=model)
 
             if model == "gpt-3.5-turbo":
@@ -203,7 +202,7 @@ def terminalLoop(args, shell, safe_mode=False):
             break
 
     
-def chatMode(goal, args, initial_message=None):
+def chatMode(goal, model, initial_message=None):
     print(Fore.CYAN + Style.BRIGHT + "\n\nStarting chat session..." + Style.RESET_ALL)
     print("You can now chat with the AI. Type 'exit' to end the chat session, or ask the AI to do something else.")
     # update the system message to say that the program has ended and the GPT is allowed to talk normally
@@ -219,7 +218,7 @@ def chatMode(goal, args, initial_message=None):
                 user_input = session.prompt('')
                 if user_input.lower() == "exit":
                     break
-            model = "gpt-4o" if args.s else "gpt-3.5-turbo"
+            model = "gpt-4o" if model.s else "gpt-3.5-turbo"
             response = get_gpt_response(user_input, model=model)
             if "CONNECT TO TERMINAL:" in response:
                 message = response.split("CONNECT TO TERMINAL: ")[0]                
@@ -231,7 +230,7 @@ def chatMode(goal, args, initial_message=None):
                 print((f"{Fore.WHITE}{Style.BRIGHT}Allow? (y/n): {Style.RESET_ALL}"), end="")
                 answer = session.prompt('')
                 if answer.lower() == "y":
-                    terminalMode(goal, args)
+                    terminalMode(goal, model)
                     break
                 else:
                     print("AI access to terminal denied.")
@@ -245,14 +244,15 @@ def chatMode(goal, args, initial_message=None):
             break
 
 def introduction():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", action="store_true", help="Use GPT-4o instead of GPT-3.5 Turbo (way smarter but more expensive)")
-    args = parser.parse_args()
-
-    model = "GPT-4o" if args.s else "GPT-3.5 Turbo"
-
+    # choose a model
+    print(f"{Style.BRIGHT}Choose a model to use: {Style.RESET_ALL}")
+    print(f"{Fore.GREEN}1. gpt-3.5-turbo{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}2. gpt-4o{Style.RESET_ALL}")
+    if input("Enter the number of the model you want to use: ") == "2":
+        model = "gpt-4o"
+    else:
+        model = "gpt-3.5-turbo"
     # Disclaimer
-    
     current_dir = os.getcwd()
     print(f"{CYAN}{BOLD}Welcome to the AI terminal! {RESET} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}")
     try:
@@ -265,11 +265,11 @@ def introduction():
     if goal == "" or goal == "exit" or goal == "quit" or goal == "q":
         # exit the program
         return
-    return goal, args
+    return goal, model
 
 if __name__ == "__main__":
-    goal, args = introduction()
+    goal, model = introduction()
     if goal:
-        terminalMode(goal, args)
+        terminalMode(goal, model)
     else:
         print("Cancelled. Exiting...")
