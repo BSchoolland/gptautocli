@@ -4,9 +4,7 @@
 import apiHandler
 import userInterface
 import historyManager
-import agentManager
-import conversationAgent
-import terminalAgent
+import chatBot
 
 if __name__ == '__main__':
     # initialize the UI
@@ -15,10 +13,6 @@ if __name__ == '__main__':
     api_handler = apiHandler.ApiHandler(user_interface)
     # welcome the user
     user_interface.welcome()
-    # initialize the conversation agent
-    conversation_agent = conversationAgent.ConversationAgent()
-    # initialize the terminal agent
-    terminal_agent = terminalAgent.TerminalAgent()
     # initialize the history manager
     history_manager = historyManager.HistoryManager()
     
@@ -29,7 +23,7 @@ if __name__ == '__main__':
     history = user_interface.choose_chat_history(all_chat_history)
     
     # initialize the agent manager
-    agent_manager = agentManager.AgentManager(user_interface, conversation_agent, terminal_agent, api_handler, history)
+    agent_manager = chatBot.ChatBot(user_interface, api_handler, history)
 
     # begin the conversation loop
     agent_manager.start_conversation()
