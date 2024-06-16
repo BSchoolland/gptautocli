@@ -13,6 +13,8 @@ if __name__ == '__main__':
     user_interface = userInterface.UserInterface()
     # initialize the API handler
     api_handler = apiHandler.ApiHandler(user_interface)
+    # welcome the user
+    user_interface.welcome()
     # initialize the conversation agent
     conversation_agent = conversationAgent.ConversationAgent()
     # initialize the terminal agent
@@ -27,8 +29,8 @@ if __name__ == '__main__':
     history = user_interface.choose_chat_history(all_chat_history)
     
     # initialize the agent manager
-    agent_manager = agentManager.AgentManager(user_interface, conversation_agent, terminal_agent, history, user_interface.get_LLM_model())
-    
+    agent_manager = agentManager.AgentManager(user_interface, conversation_agent, terminal_agent, api_handler, history, user_interface.get_LLM_model())
+
     # begin the conversation loop
     agent_manager.start_conversation()
     
