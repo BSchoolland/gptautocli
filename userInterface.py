@@ -30,10 +30,11 @@ class UserInterface:
         self.model = model
 
     def choose_chat_history(self, history):
-        pass
+        return []
 
     def get_user_input(self):
-        pass
+        input_text = input(Fore.CYAN + "You: " + Style.RESET_ALL)
+        return input_text
 
     def get_LLM_model(self):
         return self.model

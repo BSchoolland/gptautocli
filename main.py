@@ -26,7 +26,7 @@ if __name__ == '__main__':
     agent_manager = chatBot.ChatBot(user_interface, api_handler, history)
 
     # begin the conversation loop
-    agent_manager.start_conversation()
+    agent_manager.conversation_loop()
     
     # once the conversation is over, save the chat history to a new file
     history_manager.save_chat_history(agent_manager.get_chat_history())
