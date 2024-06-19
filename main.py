@@ -27,7 +27,8 @@ def main():
 
     # begin the conversation loop
     agent_manager.conversation_loop()
-    
+    # close the shell
+    agent_manager.shell.close()
     # once the conversation is over, save the chat history to a new file
     history_manager.save_chat_history(agent_manager.conversation_history)
 

@@ -14,6 +14,9 @@ class HistoryManager:
             return []
     
     def save_chat_history(self, chat_history):
-        with open('history.json', 'w') as file:
-            json.dump(chat_history, file)
+        pass # FIXME: implement this
+    
+        # removed because tool calls cause errors when converting to json
+        # with open('history.json', 'w') as file:
+        #     json.dump(chat_history, file)
             
