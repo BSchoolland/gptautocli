@@ -35,6 +35,10 @@ class UserInterface:
 
     def get_user_input(self):
         input_text = input(Fore.CYAN + "You: " + Style.RESET_ALL)
+        # make sure the input is not empty
+        while not input_text:
+            print(Fore.RED + "Please enter a message." + Style.RESET_ALL)
+            input_text = input(Fore.CYAN + "You: " + Style.RESET_ALL)
         return input_text
 
     def get_LLM_model(self):
@@ -64,7 +68,7 @@ class UserInterface:
     
     def inProgressStart(self, function_name, arguments):
         self.inProgress = True
-        print(f"{Fore.YELLOW}Running {function_name} with arguments {arguments}...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}AI entering the terminal.  Enter q to stop the process and return to the chat.{Style.RESET_ALL}")
 
     def inProgressEnd(self):
         self.inProgress = False
@@ -74,4 +78,7 @@ class UserInterface:
         print('Command: ' + input)
 
     def commandResult(self, output):
+        # if the otput ends with a newline, remove it
+        if output.endswith("\n"):
+            output = output[:-1]
         print(output)

@@ -19,7 +19,7 @@ class ChatBot:
 
         # fixme: get this from somewhere else
         osType = behaviorConfig.get_os_type()
-        self.shell = WindowsShellSession() if osType == "Windows" else LinuxOrMacShellSession()
+        self.shell = WindowsShellSession(user_interface) if osType == "Windows" else LinuxOrMacShellSession(user_interface)
 
 
     def conversation_loop(self):
@@ -64,7 +64,6 @@ class ChatBot:
                         command = arguments["command"]
                         self.user_interface.command(command)
                         function_result = self.shell.run_command(command)
-                        self.user_interface.commandResult(function_result)
                         self.conversation_history.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",

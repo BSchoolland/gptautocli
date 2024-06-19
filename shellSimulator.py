@@ -2,11 +2,12 @@ import os
 import subprocess
 import select
 import time
-import getpass
+import sys
 
 # parent class for all opperating systems
 class ShellSession:
-    def __init__(self):
+    def __init__(self, userInterface=None):
+        self.userInterface = userInterface
         self.command_counter = 0
     # same for all opperating systems
     def is_command_allowed(self, command):
@@ -24,8 +25,8 @@ class ShellSession:
         pass
 
 class LinuxOrMacShellSession(ShellSession):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, userInterface=None):
+        super().__init__(userInterface)
         import pty
         master, slave = pty.openpty()
         self.process = subprocess.Popen(
@@ -49,29 +50,50 @@ class LinuxOrMacShellSession(ShellSession):
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
         # Send command
         os.write(self.master_fd, (command + "; echo " + end_tag + "\n").encode('utf-8'))
-        output = []
         Done = False
         first = True
-        while not Done:
-            r, _, _ = select.select([self.master_fd], [], [], 0.5)
-            if r:
-                response = os.read(self.master_fd, 1024).decode('utf-8')
-                # break the command up into lines
-                responses = response.split("\r\n")
-                for response in responses:
+        output = []
 
-                    if end_tag in response and command not in response:
-                        # command output finished
+        while not Done:
+            # Wait for input from either the process or stdin, with a timeout
+            r, _, _ = select.select([self.master_fd, sys.stdin], [], [], 0.5)
+            for ready_input in r:
+                if ready_input == self.master_fd:
+                    response = os.read(self.master_fd, 1024).decode('utf-8')
+                    # Break the command up into lines
+                    responses = response.split("\r\n")
+                    for response in responses:
+                        
+                        if end_tag in response and command not in response:
+                            # Command output finished
+                            Done = True
+                            break
+                        if first:
+                            # Skip the first line which is the prompt
+                            first = False
+                            continue
+                        elif command + "; echo " + end_tag in response:
+                            # Skip the command echo
+                            continue
+                        if self.userInterface:
+                            self.userInterface.commandResult(response)
+                        output.append(response)
+                        
+
+                elif ready_input == sys.stdin:
+                    # Read from stdin (user input)
+                    userInput = input() 
+                    if userInput == "":
+                        userInput = "\n" # if the user just presses enter, send a newline
+                    if userInput == "exit" or userInput == "quit" or userInput == "q":
+                        print("User interruption detected.")
                         Done = True
-                        break
-                    if first:
-                        # skip the first line which is the prompt
-                        first = False
-                        continue
-                    elif command + "; echo " + end_tag in response:
-                        # skip the command
-                        continue
-                    output.append(response)
+                        output.append("User ended the process. Exiting...")
+                        # stop the process
+                        os.write(self.master_fd, b"\x03")
+                    else:
+                        # write the input to the process
+                        os.write(self.master_fd, (userInput + "\n").encode('utf-8'))
 
             # Check if the process has terminated
             if self.process.poll() is not None:
@@ -93,8 +115,8 @@ class LinuxOrMacShellSession(ShellSession):
 
 
 class WindowsShellSession(ShellSession):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, userInterface=None):
+        super().__init__(userInterface)
         self.process = subprocess.Popen(
             'cmd.exe',
             stdin=subprocess.PIPE,
