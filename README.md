@@ -1,61 +1,25 @@
 # Project Overview
 
 This project contains multiple Python scripts and other files that work together to form a terminal assistant called `singularity`. Below is a comprehensive overview of each file in the project:
+## DISCLAIMER
 
-## Table of Contents
+This project has not been tested extensively and due to its nature, it is possible that it could cause harm to your system. AI models are not perfect and can make mistakes, and this project **GIVES AN AI MODEL THE ABILITY TO RUN ANY COMMAND ON YOUR SYSTEM** which while helpful and really cool could be argued to be a "bad" idea. I suggest running this project in a virtual machine or on a system that you are willing to lose. I am not responsible for any damage that this project may cause to your system.  I  personally have not run into any issues, but keep in mind that damage is possible.
 
-1. [apiHandler.py](#apiHandler.py)
-2. [behaviorConfig.py](#behaviorConfig.py)
-3. [chatBot.py](#chatBot.py)
-4. [getTerminal.py](#getTerminal.py)
-5. [history.json](#history.json)
-6. [historyManager.py](#historyManager.py)
-7. [LICENSE](#LICENSE)
-8. [main.py](#main.py)
-9. [print_name.py](#print_name.py)
-10. [requirements.txt](#requirements.txt)
-11. [shellSimulator.py](#shellSimulator.py)
-12. [userInterface.py](#userInterface.py)
+### Capabilities
 
+The terminal assistant is a powerful tool that can perform a variety of tasks, essesntially capable of anything that can be done in the terminal. Here is a small subset of its capabilities:
+- **File Management**: Create, delete, and modify files and directories.
+- **System Information**: Get information about the system, such as the operating system and hardware.
+- **Write and Run Code**: Write and run code in multiple languages, including Python, Java, and C++.
+- **Install Packages**: Install packages needed for development, such as `pip` and `npm`.
+- **Fix Mistakes**: It is able to see command output and fix its own mistakes.
+- **And Much More**: The assistant is capable of many other tasks, and can be easily extended to perform even more.
 
-## Descriptions
-
-### apiHandler.py
-Sets up the OpenAI API and handles all requests. This script manages API keys and client interactions using the OpenAI service.
-
-### behaviorConfig.py
-Configures the system prompt and defines the behavior of the AI by providing context about the environment it operates in.
-
-### chatBot.py
-Manages the state of the chatbot, handles messages, and interacts with tools based on user commands.
-
-### getTerminal.py
-Detects the operating system and terminal type to tailor commands and interactions.
-
-### history.json
-Stores the chat history in a structured JSON format, which allows the assistant to maintain context across sessions.
-
-### historyManager.py
-Provides functionality to load and save chat history to a JSON file.
-
-### LICENSE
-Contains the MIT License under which the project is released.
-
-### main.py
-The entry point of the AI terminal assistant program. It initializes components and starts the conversation loop.
-
-### print_name.py
-A simple script that prints "Singularity" 50 times.
-
-### requirements.txt
-Lists the dependencies required to run the project.
-
-### shellSimulator.py
-Simulates terminal sessions for different operating systems, handling command execution and processing.
-
-### userInterface.py
-Handles user input and provides output in a user-friendly manner, incorporating various utilities to interact with the terminal.
-
+## Limitations
+The assistant is not perfect, and there are some limitations to its capabilities. Here are a few of the limitations:
+- **Prone to Mistakes**: Since the assistant is powered by OpenAI, it can sometimes make mistakes in its responses.
+- **Limited access to up-to-date information**: The assistant may not have access to the most up-to-date information, as it is not connected to the internet.
+- **Limited Ability to interact with commands that require user input**: The assistant is not yet able to interact with commands that require user input, such as `sudo`, `nano`, or `vim`.  I am working on a solution to this.
 
 ### Installation
 
@@ -89,8 +53,6 @@ To set up the project locally, follow these steps:
     ```bash
     pip install -r requirements.txt
     ```
-
----
 
 ### Usage
 
