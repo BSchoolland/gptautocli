@@ -24,10 +24,6 @@ class UserInterface:
         # Disclaimer
         current_dir = os.getcwd()
         print(f"{Fore.CYAN}Welcome to the AI terminal! {Style.RESET_ALL} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}")
-        try:
-            print(Fore.RED + Style.BRIGHT + "Disclaimer: " + Style.RESET_ALL + Fore.YELLOW + "This program has not been extensively tested and is " + Style.BRIGHT + "NOT SAFE" + Style.RESET_ALL + Fore.YELLOW + " to use outside of a virtual machine or other isolated environment. ChatGPT is prone to mistakes, may misunderstand requests, and will be receiving " + Fore.RED + Style.BRIGHT + "FULL CONTROL" + Style.RESET_ALL + Fore.YELLOW + " of your terminal if you proceed. The developer of this program is not responsible for any damage caused by the use or misuse of this program.\n"  + "You can use Control-C to exit the program at any time, although the AI does type pretty fast..." + Style.RESET_ALL + "\n")
-        except Exception as e:
-            print(f"Error: {type(e).__name__}, {str(e)}")
         self.model = model
 
     def choose_chat_history(self, history):
