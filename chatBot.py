@@ -25,7 +25,7 @@ class ChatBot:
     def conversation_loop(self):
         while True:
             user_message = self.user_interface.get_user_input()
-            if user_message == "exit":
+            if user_message == "exit" or user_message == "quit" or user_message == "q":
                 break
             self.get_gpt_response(user_message)
 
@@ -47,6 +47,8 @@ class ChatBot:
             tool_calls = response.choices[0].message.tool_calls
             if not tool_calls:
                 self.conversation_history.append({"role": "assistant", "content": response_message})
+                if self.user_interface.isInProgess():
+                    self.user_interface.inProgressEnd()
             else:
                 self.conversation_history.append({"role": "assistant", "content": response_message, "tool_calls": tool_calls})
 
@@ -55,14 +57,14 @@ class ChatBot:
             if tool_calls:
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
-                    print(f"ChatGPT is calling the {function_name} function")
+                    self.user_interface.inProgressStart(tool_call.function.name, tool_call.function.arguments)
                     if function_name == "run_command":
                         # Parse the JSON string into a dictionary
                         arguments = json.loads(tool_call.function.arguments)
                         command = arguments["command"]
-                        print('command:', command)
+                        self.user_interface.command(command)
                         function_result = self.shell.run_command(command)
-                        print('function_result:', function_result)
+                        self.user_interface.commandResult(function_result)
                         self.conversation_history.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
@@ -76,7 +78,7 @@ class ChatBot:
                             "name": function_name,
                             "content": "Tool not implemented"
                         })
-        self.user_interface.info(f"AI: {response_message}")
+        self.user_interface.chatBotMessage(response_message)
         
     
     def get_chat_history(self):

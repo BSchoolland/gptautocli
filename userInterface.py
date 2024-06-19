@@ -9,6 +9,7 @@ from getTerminal import get_os_type
 class UserInterface:
     def __init__(self):
         self.model = None
+        self.inProgress = False
 
     def welcome(self):
         osType = get_os_type()
@@ -45,9 +46,32 @@ class UserInterface:
     def info(self, message):
         print(Fore.CYAN + message + Style.RESET_ALL)
 
+    def chatBotMessage(self, message):
+        if self.model == "gpt-4o":
+            print(Fore.GREEN + "ChatGPT-4o: " + Style.RESET_ALL + message)
+        else:
+            print(Fore.YELLOW + "ChatGPT-3.5-turbo: " + Style.RESET_ALL + message)
+
     def dialog(self, message, secure=False):
         if not secure:
             return input(message + ": ")
         else:
             # use getpass to hide the input
             return getpass.getpass(message + ": ")
+        
+    def isInProgess(self):
+        return self.inProgress
+    
+    def inProgressStart(self, function_name, arguments):
+        self.inProgress = True
+        print(f"{Fore.YELLOW}Running {function_name} with arguments {arguments}...{Style.RESET_ALL}")
+
+    def inProgressEnd(self):
+        self.inProgress = False
+        print(f"{Fore.GREEN}Command completed.{Style.RESET_ALL}")
+
+    def command(self, input):
+        print('Command: ' + input)
+
+    def commandResult(self, output):
+        print(output)

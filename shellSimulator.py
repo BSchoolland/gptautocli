@@ -51,20 +51,26 @@ class LinuxOrMacShellSession(ShellSession):
         os.write(self.master_fd, (command + "; echo " + end_tag + "\n").encode('utf-8'))
         output = []
         Done = False
+        first = True
         while not Done:
             r, _, _ = select.select([self.master_fd], [], [], 0.5)
             if r:
                 response = os.read(self.master_fd, 1024).decode('utf-8')
                 # break the command up into lines
                 responses = response.split("\r\n")
-                print('response split: ', responses)
                 for response in responses:
-                    print('response: ' + response)
 
                     if end_tag in response and command not in response:
                         # command output finished
                         Done = True
                         break
+                    if first:
+                        # skip the first line which is the prompt
+                        first = False
+                        continue
+                    elif command + "; echo " + end_tag in response:
+                        # skip the command
+                        continue
                     output.append(response)
 
             # Check if the process has terminated
@@ -139,6 +145,6 @@ if __name__ == '__main__':
     print("<--BEGIN AUTOMATED TERMINAL SESSION-->")
     shell = LinuxOrMacShellSession()
     result = shell.run_command("ls -l")
-    # shell.close()
     print("<--END AUTOMATED TERMINAL SESSION-->")
     print('the result is: ', result)
+    shell.close()
