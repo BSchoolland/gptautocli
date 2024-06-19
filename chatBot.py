@@ -80,6 +80,3 @@ class ChatBot:
                         })
         self.user_interface.chatBotMessage(response_message)
         
-    
-    def get_chat_history(self):
-        return self.chat_history

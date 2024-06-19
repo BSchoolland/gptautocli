@@ -4,17 +4,16 @@ import os
 
 class HistoryManager:
     def __init__(self):
-        self.avalible_chats = []
-
+        pass
+        
     def load_chat_history(self):
         if os.path.exists('history.json'):
             with open('history.json', 'r') as file:
-                self.avalible_chats = json.load(file)
+                return []
         else:
-            self.avalible_chats = []
-        return self.avalible_chats
+            return []
     
     def save_chat_history(self, chat_history):
-        self.avalible_chats.append(chat_history)
         with open('history.json', 'w') as file:
-            json.dump(self.avalible_chats, file)
+            json.dump(chat_history, file)
+            
