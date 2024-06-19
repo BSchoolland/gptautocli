@@ -6,7 +6,7 @@ import userInterface
 import historyManager
 import chatBot
 
-if __name__ == '__main__':
+def main():
     # initialize the UI
     user_interface = userInterface.UserInterface()
     # initialize the API handler
@@ -30,3 +30,13 @@ if __name__ == '__main__':
     
     # once the conversation is over, save the chat history to a new file
     history_manager.save_chat_history(agent_manager.conversation_history)
+
+
+if __name__ == '__main__':
+    try:
+        # attempt to run the main program
+        main()
+    except Exception as e:
+        print("An error occurred: ", e)
+        input("Press enter to exit.")
+    
