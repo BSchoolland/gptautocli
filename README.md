@@ -1,9 +1,9 @@
 # Project Overview
 
-This project contains multiple Python scripts and other files that work together to form a terminal assistant called `singularity`. Below is a comprehensive overview of each file in the project:
-## DISCLAIMER
+This project contains multiple Python scripts and other files that work together to form a terminal assistant called `singularity` (named for the fact that I used it to improve its own code).
 
-This project has not been tested extensively and due to its nature, it is possible that it could cause harm to your system. AI models are not perfect and can make mistakes, and this project **GIVES AN AI MODEL THE ABILITY TO RUN ANY COMMAND ON YOUR SYSTEM** which while helpful and really cool could be argued to be a "bad" idea. I suggest running this project in a virtual machine or on a system that you are willing to lose. I am not responsible for any damage that this project may cause to your system.  I  personally have not run into any issues, but keep in mind that damage is possible.
+## DISCLAIMER
+This project has not been tested extensively and due to its nature, it is possible that it could cause harm to your system. AI models are not perfect and can make mistakes, and this project **GIVES AN AI MODEL THE ABILITY TO RUN ANY COMMAND ON YOUR SYSTEM** which while really cool could be argued to be a "really stupid and dangerous" idea. I suggest running this project in a virtual machine or on a system that you are willing to lose. I am not responsible for any damage that this project may cause to your system.  I personally have not run into any issues, but keep in mind that damage is possible.
 
 ### Capabilities
 
