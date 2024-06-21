@@ -70,7 +70,7 @@ To use the terminal assistant:
 
 ### Contributing
 
-We welcome contributions to this project! To contribute, follow these steps:
+I welcome contributions to this project! To contribute, follow these steps:
 
 1. **Fork the Repository**: Click the "Fork" button on the top right of the repository page.
 2. **Clone Your Fork**:
