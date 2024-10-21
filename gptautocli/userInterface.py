@@ -4,8 +4,12 @@
 from colorama import Fore, Style
 import getpass
 import os
-from getTerminal import get_os_type
+if __name__ == "__main__" and __package__ is None:
+    from getTerminal import get_os_type
+else:
+    from .getTerminal import get_os_type
 
+    
 class UserInterface:
     def __init__(self):
         self.model = None

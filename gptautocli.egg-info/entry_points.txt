@@ -1,0 +1,3 @@
+[console_scripts]
+gptautocli = gptautocli.main:main
+
