@@ -6,17 +6,6 @@ import getpass
 import os
 from getTerminal import get_os_type
 
-
-# from tkinter import *
-
-# root = Tk()  # create a root widget
-# root.title("Tk Example")
-# root.minsize(200, 200)  # width, height
-# # root.maxsize(500, 500)
-# root.geometry("600x600+50+50")  # width x height + x + y
-# root.mainloop()
-
-
 class UserInterface:
     def __init__(self):
         self.model = None
