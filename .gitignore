@@ -3,3 +3,5 @@ __pycache__/
 venv/
 history.json
 test.txt
+dist/
+build/

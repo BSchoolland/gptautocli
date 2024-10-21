@@ -54,6 +54,23 @@ To set up the project locally, follow these steps:
     pip install -r requirements.txt
     ```
 
+### Build process
+
+The following explains how to compile the project into a single executable file for windows and linux.
+
+1. **Install PyInstaller**:
+    ```bash
+    pip install pyinstaller
+    ```
+2. **Build the Executable**:
+    At this point, if on windows, you will be building a windows executable, and if on linux, you will be building a linux executable.
+    ```bash
+    pyinstaller --onefile main.py
+    ```
+3. **Run the Executable**:
+    The executable will be located in the `dist` directory. Run it to start the assistant without needing python installed.
+
+
 ### Usage
 
 To use the terminal assistant:

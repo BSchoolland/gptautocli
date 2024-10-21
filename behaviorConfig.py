@@ -81,3 +81,47 @@ tools = [
     }
     # Some more tools can be added here, ideas I have are: Web browser control and long term memory
 ]
+
+
+# config for the smaller AI that assesses the risk of each command
+riskAssessmentPrompt = {"role": "system", "content": """
+
+1 - Read Only: Commands that simply read data without modifying anything at all
+Example: ls -l - Lists files in a directory, changing nothing
+
+2 - Very Safe: Commands that can write data but can not do any accidental damage
+Example: touch myfile.txt - creates a file if it does not exist, but will not overwrite existing files
+
+3 - Low Risk: Commands that alter files or locations, risky as it causes a change to the system.
+Example: echo "text" >> myfile.txt - adds some data to the file
+
+4 - High Risk: Commands that can modify data or cause other problems, leading to data loss on serious inconvenience if used wrongly.
+Example: echo "text" > myfile.txt - if important info is in myfile.txt data could be lost
+
+5 - Critical Risk (Accident-Prone): Commands that can cause severe system-wide damage or data loss if accidentally misused, often with no recovery option.
+Example: dd if=/dev/zero of=/dev/sda - Overwrites a disk, leading to total data loss if the wrong device is targeted.
+
+The user is going to provide some commands.  Output nothing but a tool call to the riskAssessment function with the maximum and minimum risk levels of the command provided.
+"""}
+
+riskAssessmentTool = {
+    "type": "function",
+    "function": {
+        "name": "riskAssessment",
+        "description": "Call this function to provide a risk assessment of a command.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "minRisk": {
+                    "type": "integer",
+                    "description": "The minimum risk level of the command (1-5)",
+                },
+                "maxRisk": {
+                    "type": "integer",
+                    "description": "The maximum risk level of the command (1-5)",
+                },
+            },
+            "required": ["minRisk", "maxRisk"],
+        },
+    },
+}
