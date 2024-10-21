@@ -1,25 +1,26 @@
 # Project Overview
 
-This project contains multiple Python scripts and other files that work together to form a terminal assistant called `singularity` (named for the fact that I used it to improve its own code).
+This project contains multiple Python scripts and other files that work together to form a terminal assistant called `gptautocli' powered by OpenAI's flagship GPT-4o model. The primary function of this package is to provide a conversational interface to the terminal, allowing users to run commands and perform tasks using natural language. 
 
 ## DISCLAIMER
-This project has not been tested extensively and due to its nature, it is possible that it could cause harm to your system. AI models are not perfect and can make mistakes, and this project **GIVES AN AI MODEL THE ABILITY TO RUN ANY COMMAND ON YOUR SYSTEM** which while really cool could be argued to be a "really stupid and dangerous" idea. I suggest running this project in a virtual machine or on a system that you are willing to lose. I am not responsible for any damage that this project may cause to your system.  I personally have not run into any issues, but keep in mind that damage is possible.
+This project has not been tested extensively and due to its nature, it is possible that it could cause harm to your system. AI models are not perfect and can make mistakes, and this project **GIVES AN AI MODEL THE ABILITY TO RUN ANY COMMAND ON YOUR SYSTEM** which has obvious risks. I strongly suggest not using this in a production environment, and cannot be held responsible for any damage caused by this project.
+
 
 ### Capabilities
 
-The terminal assistant is a powerful tool that can perform a variety of tasks, essesntially capable of anything that can be done in the terminal. Here is a small subset of its capabilities:
+This is a powerful tool that can perform a variety of tasks, essentially capable of anything that can be done in the terminal. Here is a small subset of its capabilities:
 - **File Management**: Create, delete, and modify files and directories.
 - **System Information**: Get information about the system, such as the operating system and hardware.
-- **Write and Run Code**: Write and run code in multiple languages, including Python, Java, and C++.
-- **Install Packages**: Install packages needed for development, such as `pip` and `npm`.
-- **Fix Mistakes**: It is able to see command output and fix its own mistakes.
-- **And Much More**: The assistant is capable of many other tasks, and can be easily extended to perform even more.
+- **Write and Run Code**: Write and run code in most languages.
+- **Install Packages**: Install packages needed for development through package managers like `pip` and `apt`.
+- **Fix Mistakes**: It is able to see command output and will usually be able to fix mistakes that it makes.
+- **And Much More**: I'm sure there are many more capabilities that I haven't thought of yet!
 
 ## Limitations
 The assistant is not perfect, and there are some limitations to its capabilities. Here are a few of the limitations:
 - **Prone to Mistakes**: Since the assistant is powered by OpenAI, it can sometimes make mistakes in its responses.
 - **Limited access to up-to-date information**: The assistant may not have access to the most up-to-date information, as it is not connected to the internet.
-- **Limited Ability to interact with commands that require user input**: The assistant is not yet able to interact with commands that require user input, such as `sudo`, `nano`, or `vim`.  I am working on a solution to this.
+- **Limited Ability to interact with commands that require user input**: The assistant has trouble interacting with commands that require user input, such as interactive programs or commands that require a password. 
 
 ### Installation
 
@@ -54,23 +55,6 @@ To set up the project locally, follow these steps:
     pip install -r requirements.txt
     ```
 
-### Build process
-
-The following explains how to compile the project into a single executable file for windows and linux.
-
-1. **Install PyInstaller**:
-    ```bash
-    pip install pyinstaller
-    ```
-2. **Build the Executable**:
-    At this point, if on windows, you will be building a windows executable, and if on linux, you will be building a linux executable.
-    ```bash
-    pyinstaller --onefile main.py
-    ```
-3. **Run the Executable**:
-    The executable will be located in the `dist` directory. Run it to start the assistant without needing python installed.
-
-
 ### Usage
 
 To use the terminal assistant:
@@ -87,12 +71,12 @@ To use the terminal assistant:
 
 ### Contributing
 
-I welcome contributions to this project! To contribute, follow these steps:
+I welcome contributions to this project! Please contact me (bschoolland@gmail.com) if you would like to contribute, or feel free to simply fork the repository and submit a pull request.
 
 1. **Fork the Repository**: Click the "Fork" button on the top right of the repository page.
 2. **Clone Your Fork**:
     ```bash
-    git clone https://github.com/yourusername/terminal_assistant.git
+    git clone https://github.com/BSchoolland/gptautocli
     cd terminal_assistant
     ```
 3. **Create a Branch**:
