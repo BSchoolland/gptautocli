@@ -69,7 +69,7 @@ class ApiHandler:
         conversation_history= [{"role": "user", "content": "Hi"}]
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=conversation_history
         )
 
