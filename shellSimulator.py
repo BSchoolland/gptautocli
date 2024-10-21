@@ -49,7 +49,7 @@ class LinuxOrMacShellSession(ShellSession):
         self.command_counter += 1  # Increment command counter
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
         # Send command
-        os.write(self.master_fd, (command + "; echo " + end_tag + "\n").encode('utf-8'))
+        os.write(self.master_fd, (" " + command + "; echo " + end_tag + "\n").encode('utf-8'))
         Done = False
         first = True
         output = []
