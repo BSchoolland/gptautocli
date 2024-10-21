@@ -5,3 +5,4 @@ history.json
 test.txt
 dist/
 build/
+*.egg-info/
