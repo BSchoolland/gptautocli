@@ -18,10 +18,8 @@ def main():
     user_interface.welcome()
     # initialize the history manager
     history_manager = historyManager.HistoryManager()
-    
     # load chat history
     all_chat_history = history_manager.load_chat_history()
-    
     # choose either a new chat or a previous chat
     history = user_interface.choose_chat_history(all_chat_history)
     

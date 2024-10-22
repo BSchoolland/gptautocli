@@ -4,6 +4,7 @@ import json
 
 from . import behaviorConfig
 from .shellSimulator import WindowsShellSession, LinuxOrMacShellSession
+from . import riskAssessment
 
 class ChatBot:
     def __init__(self, user_interface, api_handler, history):
@@ -22,6 +23,7 @@ class ChatBot:
         # fixme: get this from somewhere else
         osType = behaviorConfig.get_os_type()
         self.shell = WindowsShellSession(user_interface) if osType == "Windows" else LinuxOrMacShellSession(user_interface)
+        self.riskAssessmentTool = riskAssessment.RiskAssessment(user_interface, api_handler)
 
 
     def conversation_loop(self):
@@ -65,7 +67,11 @@ class ChatBot:
                         arguments = json.loads(tool_call.function.arguments)
                         command = arguments["command"]
                         self.user_interface.command(command)
-                        function_result = self.shell.run_command(command)
+                        function_result = ''
+                        if (self.riskAssessmentTool.assess_risk(command)):
+                            function_result = self.shell.run_command(command)
+                        else:
+                            function_result = "USER INTERRUPT: The user denied this command, ask them why and what they would prefer to do instead."
                         self.conversation_history.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",

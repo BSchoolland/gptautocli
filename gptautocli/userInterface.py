@@ -26,6 +26,13 @@ class UserInterface:
         current_dir = os.getcwd()
         print(f"{Fore.CYAN}Welcome to the AI terminal! {Style.RESET_ALL} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}")
         self.model = model
+    def riskConfirmation(self, command, risk_score):
+        choice = ''
+        if risk_score == 5:
+            choice = input(Fore.RED + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
+        else:
+            choice = input(Fore.YELLOW + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
+        return choice.lower() == "y"
 
     def choose_chat_history(self, history):
         return []
