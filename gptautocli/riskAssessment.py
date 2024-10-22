@@ -24,9 +24,7 @@ class RiskAssessment:
         self.api_handler = apiHandler.ApiHandler(user_interface)
 
     def assess_risk(self, command):
-        if self.risk_tolerance == 0:
-            return False
-        elif self.risk_tolerance == 6:
+        if self.risk_tolerance == 6:
             return True
         else:
             # get the risk score 
@@ -49,7 +47,7 @@ class RiskAssessment:
                 if char.isdigit() and int(char) > risk_score:
                     risk_score = int(char)
             if risk_score < self.risk_tolerance:
-                return False
+                return True
             else:
                 return self.user_interface.riskConfirmation(command, risk_score)
     
