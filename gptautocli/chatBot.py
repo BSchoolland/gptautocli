@@ -1,12 +1,9 @@
 # manages chatbot state
 import json
 
-if __name__ == "__main__" and __package__ is None:
-    import behaviorConfig
-    from shellSimulator import WindowsShellSession, LinuxOrMacShellSession
-else:
-    from . import behaviorConfig
-    from .shellSimulator import WindowsShellSession, LinuxOrMacShellSession
+
+from . import behaviorConfig
+from .shellSimulator import WindowsShellSession, LinuxOrMacShellSession
 
 class ChatBot:
     def __init__(self, user_interface, api_handler, history):

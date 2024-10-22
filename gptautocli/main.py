@@ -1,18 +1,10 @@
 # This is the entry point for the AI terminal assistant program.  It outlines the main program flow and calls other files at a high level.
 
-# Conditional imports based on how the script is executed
-if __name__ == "__main__" and __package__ is None:
-    # Direct script execution
-    import apiHandler
-    import userInterface
-    import historyManager
-    import chatBot
-else:
-    # Package execution
-    from . import apiHandler
-    from . import userInterface
-    from . import historyManager
-    from . import chatBot
+# Package execution
+from . import apiHandler
+from . import userInterface
+from . import historyManager
+from . import chatBot
 
 def main():
     # initialize the UI

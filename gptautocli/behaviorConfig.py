@@ -1,8 +1,7 @@
-# the system prompt that tells teh AI what it is supposed to do
-if __name__ == "__main__" and __package__ is None:
-    from getTerminal import get_os_type, get_terminal_type
-else:
-    from .getTerminal import get_os_type, get_terminal_type
+# the system prompt that tells the AI what it is supposed to do
+
+from .getTerminal import get_os_type, get_terminal_type
+
 import os
 osType = get_os_type()
 terminalType = get_terminal_type()
