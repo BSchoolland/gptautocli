@@ -125,13 +125,18 @@ class LinuxOrMacShellSession(ShellSession):
 class WindowsShellSession(ShellSession):
     def __init__(self, userInterface=None):
         super().__init__(userInterface)
+        # Create a persistent process that stays alive between commands
         self.process = subprocess.Popen(
             'cmd.exe',
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            bufsize=1,  # Line buffered
+            universal_newlines=True
         )
+        self.sel = selectors.DefaultSelector()
+        self.sel.register(self.process.stdout, selectors.EVENT_READ)
 
     def run_command(self, command):
         # Check if the command is allowed
@@ -139,70 +144,103 @@ class WindowsShellSession(ShellSession):
         if command_status != "Yes":
             return command_status
 
-        # Start the process
-        self.process = subprocess.Popen(["cmd.exe"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
+        self.command_counter += 1
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
-        self.process.stdin.write(command + "\n")
-        self.process.stdin.write(f"echo {end_tag}\n")
-        self.process.stdin.flush()
-
-        sel = selectors.DefaultSelector()
-
-        # Register process stdout for reading
-        sel.register(self.process.stdout, selectors.EVENT_READ)
+        
+        # Send the command
+        try:
+            self.process.stdin.write(f"{command}\n")
+            self.process.stdin.write(f"echo {end_tag}\n")
+            self.process.stdin.flush()
+        except IOError:
+            return "Error: Failed to send command to process"
 
         output = []
+        command_output_started = False
         Done = False
 
         while not Done:
-            # Check for available input/output
-            events = sel.select(timeout=0.5)
+            # Check for available input/output with a timeout
+            events = self.sel.select(timeout=0.1)
+            
+            # Handle process output
             for key, _ in events:
                 if key.fileobj == self.process.stdout:
-                    line = self.process.stdout.readline()
-                    if not line:
+                    try:
+                        line = self.process.stdout.readline()
+                        if not line:
+                            Done = True
+                            break
+                            
+                        # Skip command echo and empty lines at the start
+                        if not command_output_started:
+                            if command in line or not line.strip():
+                                continue
+                            command_output_started = True
+                            
+                        if end_tag in line:
+                            Done = True
+                            break
+                            
+                        if self.userInterface:
+                            self.userInterface.commandResult(line.rstrip())
+                        output.append(line)
+                    except IOError:
                         Done = True
                         break
-                    if end_tag in line:
-                        Done = True
-                        break
-                    output.append(line)
 
-            # Check for user input and send it to the process
+            # Check for user input
             if msvcrt.kbhit():
-                user_input = msvcrt.getche().decode('utf-8')
-                if user_input == "\r":  # Enter key
-                    user_input = "\n"
-                if user_input.lower() in ["exit", "quit", "q"]:
-                    print("User interruption detected.")
-                    Done = True
-                    output.append("User ended the process. Exiting...")
-                    self.process.stdin.write("\x03")  # Send Ctrl+C
-                else:
-                    self.process.stdin.write(user_input + "\n")
+                char = msvcrt.getwche()  # Use getwche for better Unicode support
+                
+                # Handle special cases
+                if char == '\r':  # Enter key
+                    print()  # New line after enter
+                    self.process.stdin.write('\n')
                     self.process.stdin.flush()
+                elif char == '\x03':  # Ctrl+C
+                    print("^C")
+                    self.process.stdin.write('\x03')
+                    self.process.stdin.flush()
+                    Done = True
+                    output.append("User interrupted the process")
+                elif char == '\x1a':  # Ctrl+Z
+                    print("^Z")
+                    self.process.stdin.write('\x1a')
+                    self.process.stdin.flush()
+                else:
+                    # Send regular character input
+                    try:
+                        self.process.stdin.write(char)
+                        self.process.stdin.flush()
+                    except IOError:
+                        Done = True
+                        break
 
-            # Check if the process has terminated
+            # Check if process has terminated
             if self.process.poll() is not None:
                 Done = True
+                break
 
-        sel.unregister(self.process.stdout)
-
-        result = ''.join(output)
-        # Limit the output to 1000 characters
+        result = ''.join(output).strip()
+        # Limit output length
         if len(result) > 1000:
             result = result[:500] + "... content truncated to save tokens. ..." + result[-500:]
-
         return result
 
     def close(self):
         if self.process:
-            self.process.stdin.write("exit\n")
-            self.process.stdin.flush()
-            time.sleep(1)  # Give time for the exit command to process
-            self.process.terminate()
-            self.process.wait()
+            try:
+                self.process.stdin.write("exit\n")
+                self.process.stdin.flush()
+                self.sel.unregister(self.process.stdout)
+                self.sel.close()
+                time.sleep(1)  # Give time for the exit command to process
+            except:
+                pass  # Ignore errors during cleanup
+            finally:
+                self.process.terminate()
+                self.process.wait()
 
 
 
