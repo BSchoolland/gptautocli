@@ -1,11 +1,12 @@
 # Handles user input and provides output
 
 
-from colorama import Fore, Style
+from colorama import Fore, Style, init
 import getpass
 import os
 from gptautocli.getTerminal import get_os_type
 
+init() # ensure colorama works on windows
     
 class UserInterface:
     def __init__(self):
