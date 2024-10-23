@@ -135,9 +135,7 @@ class WindowsShellSession(ShellSession):
             bufsize=1,  # Line buffered
             universal_newlines=True
         )
-        self.sel = selectors.DefaultSelector()
-        self.sel.register(self.process.stdout, selectors.EVENT_READ)
-
+        
     def run_command(self, command):
         # Check if the command is allowed
         command_status = self.is_command_allowed(command)
@@ -160,36 +158,32 @@ class WindowsShellSession(ShellSession):
         Done = False
 
         while not Done:
-            # Check for available input/output with a timeout
-            events = self.sel.select(timeout=0.1)
-            
-            # Handle process output
-            for key, _ in events:
-                if key.fileobj == self.process.stdout:
-                    try:
-                        line = self.process.stdout.readline()
-                        if not line:
-                            Done = True
-                            break
-                            
-                        # Skip command echo and empty lines at the start
-                        if not command_output_started:
-                            if command in line or not line.strip():
-                                continue
-                            command_output_started = True
-                            
-                        if end_tag in line:
-                            Done = True
-                            break
-                            
-                        if self.userInterface:
-                            self.userInterface.commandResult(line.rstrip())
-                        output.append(line)
-                    except IOError:
-                        Done = True
-                        break
+            # Use a small timeout to avoid busy waiting
+            try:
+                line = self.process.stdout.readline()
+                if not line:
+                    Done = True
+                    break
+                    
+                # Skip command echo and empty lines at the start
+                if not command_output_started:
+                    if command in line or not line.strip():
+                        continue
+                    command_output_started = True
+                    
+                if end_tag in line:
+                    Done = True
+                    break
+                    
+                if self.userInterface:
+                    self.userInterface.commandResult(line.rstrip())
+                output.append(line)
 
-            # Check for user input
+            except IOError:
+                Done = True
+                break
+
+            # Check for user input (non-blocking)
             if msvcrt.kbhit():
                 char = msvcrt.getwche()  # Use getwche for better Unicode support
                 
@@ -233,14 +227,13 @@ class WindowsShellSession(ShellSession):
             try:
                 self.process.stdin.write("exit\n")
                 self.process.stdin.flush()
-                self.sel.unregister(self.process.stdout)
-                self.sel.close()
                 time.sleep(1)  # Give time for the exit command to process
             except:
                 pass  # Ignore errors during cleanup
             finally:
                 self.process.terminate()
                 self.process.wait()
+
 
 
 
