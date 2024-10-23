@@ -46,6 +46,10 @@ class RiskAssessment:
             for char in response_message:
                 if char.isdigit() and int(char) > risk_score:
                     risk_score = int(char)
+            # catch case where risk assessment AI does not return a risk score
+            if risk_score == -1:
+                risk_score = 3 # default to medium risk
+            
             if risk_score < self.risk_tolerance:
                 return True
             else:
