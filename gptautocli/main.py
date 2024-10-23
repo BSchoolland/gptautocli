@@ -5,20 +5,21 @@ from . import apiHandler
 from . import userInterface
 from . import historyManager
 from . import chatBot
+from . import configHandler
 
 def main():
     # initialize the UI
     user_interface = userInterface.UserInterface()
+    # initialize config
+    config_handler = configHandler.ConfigHandler(user_interface)
     # initialize the API handler
     api_handler = apiHandler.ApiHandler(user_interface)
     # welcome the user
     user_interface.welcome()
     # initialize the history manager
     history_manager = historyManager.HistoryManager()
-    
     # load chat history
     all_chat_history = history_manager.load_chat_history()
-    
     # choose either a new chat or a previous chat
     history = user_interface.choose_chat_history(all_chat_history)
     
