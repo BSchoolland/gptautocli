@@ -5,7 +5,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="gptautocli", 
-    version="0.1.2",
+    version="0.1.2.2",
     author="Benjamin Schoolland",
     author_email="bschoolland@gmail.com",
     description="Provides a conversational interface to the terminal, allowing users to run commands and perform tasks using natural language. ",
