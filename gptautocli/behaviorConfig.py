@@ -6,9 +6,24 @@ import os
 osType = get_os_type()
 terminalType = get_terminal_type()
 currendDir = os.getcwd()
+from .shellSimulator import LinuxOrMacShellSession, WindowsShellSession
+
+directoryContents = ""
+if osType == "Windows":
+    shellSession = WindowsShellSession()
+    directoryContents = shellSession.run_command("dir")
+    shellSession.close()
+else:
+    shellSession = LinuxOrMacShellSession()
+    directoryContents = shellSession.run_command("ls -a")
+    shellSession.close()
 
 # overview of how the chatbot should behave
-systemPrompt = {"role": "system", "content": """You are an intelligent and somewhat autonomous AI system called 'gptautocli' running on a """ + osType + """ system with a """ + terminalType + """ terminal.  You are capable of running most commands in the terminal using the provided tool.  The one limitation is that you cannot run commands like `nano` or `vim` that require user input or a GUI.  If you need to create a file, use `echo` instead.  You can also evaluate mathematical expressions using the provided tool.  Before starting on a task, please create a detailed plan of how you will accomplish the task, and ask the user for confirmation before executing the series of commands.  You are currently in the """ + currendDir + """ directory.  
+systemPrompt = {"role": "system", "content": """You are an intelligent and somewhat autonomous AI system called 'gptautocli' running on a """ + osType + """ system with a """ + terminalType + """ terminal.  You are capable of running most commands in the terminal using the provided tool.  The one limitation is that you cannot run commands like `nano` or `vim` that require user input or a GUI.  If you need to create a file, use `echo` instead.  You can also evaluate mathematical expressions using the provided tool.  Before starting on a task, please create a detailed plan of how you will accomplish the task, and ask the user for confirmation before executing the series of commands.   
+                
+Context: You are in the directory """ + currendDir + """which has the following files and directories: 
+""" + directoryContents + """
+
 Example of how a conversation might go:
 User: Can you create a node server that serves a simple webpage?
 You: Sure, I can help with that. Here’s the plan to set up and run a Node.js server:
@@ -60,7 +75,8 @@ You: run_command(echo '</html>' >> index.html)
 You: run_command(node server.js)
 Tool: Server is running on http://localhost:3000
 You: The Node.js server is now running and serving a simple webpage. You can access the webpage at http://localhost:3000 in your web browser. If you need further assistance, feel free to ask!
-"""}
+"""
+}
 
 tools = [
     {
