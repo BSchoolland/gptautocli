@@ -3,13 +3,20 @@ import subprocess
 import select
 import time
 import sys
+import selectors
 
-# parent class for all opperating systems
+import sys
+from . import behaviorConfig
+
+if behaviorConfig.get_os_type() == "Windows":
+    import msvcrt  # Only import msvcrt if running on Windows
+
+# parent class for all operating systems
 class ShellSession:
     def __init__(self, userInterface=None):
         self.userInterface = userInterface
         self.command_counter = 0
-    # same for all opperating systems
+    # same for all operating systems
     def is_command_allowed(self, command):
         # list of disallowed commands: nano, vi, vim FIXME: add windows and mac commands
         disallowed_commands = ["nano", "vi", "vim"]
@@ -18,6 +25,7 @@ class ShellSession:
                 return f"TERMINAL ERROR: Command '{disallowed_command}' is not allowed. Please try using an alternative command ex: 'echo instead of nano'."
         # make sure the command does not include ``` bash or ```shell
         return "Yes"
+    
     # to be implemented by the child classes
     def run_command(self, command):
         pass
@@ -130,27 +138,62 @@ class WindowsShellSession(ShellSession):
         command_status = self.is_command_allowed(command)
         if command_status != "Yes":
             return command_status
-        
+
+        # Start the process
+        self.process = subprocess.Popen(["cmd.exe"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
-        # Send command
         self.process.stdin.write(command + "\n")
         self.process.stdin.write(f"echo {end_tag}\n")
         self.process.stdin.flush()
 
+        sel = selectors.DefaultSelector()
+
+        # Register process stdout for reading
+        sel.register(self.process.stdout, selectors.EVENT_READ)
+
         output = []
-        # Continue reading while the subprocess is running
-        while True:
-            line = self.process.stdout.readline()
-            if not line:
-                break  # No more output
-            if end_tag in line:
-                break  # Command output finished
-            output.append(line)
-        
+        Done = False
+
+        while not Done:
+            # Check for available input/output
+            events = sel.select(timeout=0.5)
+            for key, _ in events:
+                if key.fileobj == self.process.stdout:
+                    line = self.process.stdout.readline()
+                    if not line:
+                        Done = True
+                        break
+                    if end_tag in line:
+                        Done = True
+                        break
+                    output.append(line)
+
+            # Check for user input and send it to the process
+            if msvcrt.kbhit():
+                user_input = msvcrt.getche().decode('utf-8')
+                if user_input == "\r":  # Enter key
+                    user_input = "\n"
+                if user_input.lower() in ["exit", "quit", "q"]:
+                    print("User interruption detected.")
+                    Done = True
+                    output.append("User ended the process. Exiting...")
+                    self.process.stdin.write("\x03")  # Send Ctrl+C
+                else:
+                    self.process.stdin.write(user_input + "\n")
+                    self.process.stdin.flush()
+
+            # Check if the process has terminated
+            if self.process.poll() is not None:
+                Done = True
+
+        sel.unregister(self.process.stdout)
+
         result = ''.join(output)
-        # limit the output to 1000 characters
+        # Limit the output to 1000 characters
         if len(result) > 1000:
-            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:] # TODO: add a way to display the full output
+            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:]
+
         return result
 
     def close(self):
