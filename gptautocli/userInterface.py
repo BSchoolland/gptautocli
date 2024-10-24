@@ -61,10 +61,8 @@ class UserInterface:
         print(Fore.CYAN + message + Style.RESET_ALL)
 
     def chatBotMessage(self, message):
-        if self.model == "gpt-4o":
-            print(Fore.GREEN + "ChatGPT-4o: " + Style.RESET_ALL + message)
-        else:
-            print(Fore.YELLOW + "ChatGPT-4o-mini: " + Style.RESET_ALL + message)
+
+        print(Fore.GREEN + self.model + ": "+ Style.RESET_ALL + message)
 
     def dialog(self, message, secure=False):
         if not secure:
