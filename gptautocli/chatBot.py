@@ -66,10 +66,11 @@ class ChatBot:
                         # Parse the JSON string into a dictionary
                         arguments = json.loads(tool_call.function.arguments)
                         command = arguments["command"]
+                        dangerouslyDisplayFullOutput = arguments["dangerouslyDisplayFullOutput"] if "dangerouslyDisplayFullOutput" in arguments else False
                         self.user_interface.command(command)
                         function_result = ''
                         if (self.riskAssessmentTool.assess_risk(command)):
-                            function_result = self.shell.run_command(command)
+                            function_result = self.shell.run_command(command, dangerouslyDisplayFullOutput)
                         else:
                             function_result = "USER INTERRUPT: The user denied this command, ask them why and what they would prefer to do instead."
                         self.conversation_history.append({
