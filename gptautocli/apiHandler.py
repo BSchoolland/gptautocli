@@ -5,10 +5,7 @@ from openai import OpenAI
 
 # Determine the appropriate config path based on the operating system
 def get_config_path():
-    if platform.system() == 'Windows':
-        return os.path.join(os.getenv('APPDATA'), 'gptautocli', 'config.ini')
-    else:
-        return os.path.expanduser('~/.gptautocli.config')
+    return os.path.expanduser('~/.gptautocli.config')
 
 config_path = get_config_path()
 config = configparser.ConfigParser()

@@ -3,13 +3,20 @@ import subprocess
 import select
 import time
 import sys
+import selectors
 
-# parent class for all opperating systems
+import sys
+from . import behaviorConfig
+
+if behaviorConfig.get_os_type() == "Windows":
+    import msvcrt  # Only import msvcrt if running on Windows
+
+# parent class for all operating systems
 class ShellSession:
     def __init__(self, userInterface=None):
         self.userInterface = userInterface
         self.command_counter = 0
-    # same for all opperating systems
+    # same for all operating systems
     def is_command_allowed(self, command):
         # list of disallowed commands: nano, vi, vim FIXME: add windows and mac commands
         disallowed_commands = ["nano", "vi", "vim"]
@@ -18,6 +25,7 @@ class ShellSession:
                 return f"TERMINAL ERROR: Command '{disallowed_command}' is not allowed. Please try using an alternative command ex: 'echo instead of nano'."
         # make sure the command does not include ``` bash or ```shell
         return "Yes"
+    
     # to be implemented by the child classes
     def run_command(self, command):
         pass
@@ -117,49 +125,115 @@ class LinuxOrMacShellSession(ShellSession):
 class WindowsShellSession(ShellSession):
     def __init__(self, userInterface=None):
         super().__init__(userInterface)
+        # Create a persistent process that stays alive between commands
         self.process = subprocess.Popen(
             'cmd.exe',
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            bufsize=1,  # Line buffered
+            universal_newlines=True
         )
-
+        
     def run_command(self, command):
         # Check if the command is allowed
         command_status = self.is_command_allowed(command)
         if command_status != "Yes":
             return command_status
-        
+
+        self.command_counter += 1
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
-        # Send command
-        self.process.stdin.write(command + "\n")
-        self.process.stdin.write(f"echo {end_tag}\n")
-        self.process.stdin.flush()
+        
+        # Send the command
+        try:
+            self.process.stdin.write(f"{command}\n")
+            self.process.stdin.write(f"echo {end_tag}\n")
+            self.process.stdin.flush()
+        except IOError:
+            return "Error: Failed to send command to process"
 
         output = []
-        # Continue reading while the subprocess is running
-        while True:
-            line = self.process.stdout.readline()
-            if not line:
-                break  # No more output
-            if end_tag in line:
-                break  # Command output finished
-            output.append(line)
-        
-        result = ''.join(output)
-        # limit the output to 1000 characters
+        command_output_started = False
+        Done = False
+
+        while not Done:
+            # Use a small timeout to avoid busy waiting
+            try:
+                line = self.process.stdout.readline()
+                if not line:
+                    Done = True
+                    break
+                    
+                # Skip command echo and empty lines at the start
+                if not command_output_started:
+                    if command in line or not line.strip():
+                        continue
+                    command_output_started = True
+                    
+                if end_tag in line:
+                    Done = True
+                    break
+                    
+                if self.userInterface:
+                    self.userInterface.commandResult(line.rstrip())
+                output.append(line)
+
+            except IOError:
+                Done = True
+                break
+
+            # Check for user input (non-blocking)
+            if msvcrt.kbhit():
+                char = msvcrt.getwche()  # Use getwche for better Unicode support
+                
+                # Handle special cases
+                if char == '\r':  # Enter key
+                    print()  # New line after enter
+                    self.process.stdin.write('\n')
+                    self.process.stdin.flush()
+                elif char == '\x03':  # Ctrl+C
+                    print("^C")
+                    self.process.stdin.write('\x03')
+                    self.process.stdin.flush()
+                    Done = True
+                    output.append("User interrupted the process")
+                elif char == '\x1a':  # Ctrl+Z
+                    print("^Z")
+                    self.process.stdin.write('\x1a')
+                    self.process.stdin.flush()
+                else:
+                    # Send regular character input
+                    try:
+                        self.process.stdin.write(char)
+                        self.process.stdin.flush()
+                    except IOError:
+                        Done = True
+                        break
+
+            # Check if process has terminated
+            if self.process.poll() is not None:
+                Done = True
+                break
+
+        result = ''.join(output).strip()
+        # Limit output length
         if len(result) > 1000:
-            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:] # TODO: add a way to display the full output
+            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:]
         return result
 
     def close(self):
         if self.process:
-            self.process.stdin.write("exit\n")
-            self.process.stdin.flush()
-            time.sleep(1)  # Give time for the exit command to process
-            self.process.terminate()
-            self.process.wait()
+            try:
+                self.process.stdin.write("exit\n")
+                self.process.stdin.flush()
+                time.sleep(1)  # Give time for the exit command to process
+            except:
+                pass  # Ignore errors during cleanup
+            finally:
+                self.process.terminate()
+                self.process.wait()
+
 
 
 

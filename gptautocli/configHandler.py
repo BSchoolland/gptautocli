@@ -1,14 +1,10 @@
 import configparser
 import os
-import platform
 from openai import OpenAI
 
 # Determine the appropriate config path based on the operating system
 def get_config_path():
-    if platform.system() == 'Windows':
-        return os.path.join(os.getenv('APPDATA'), 'gptautocli', 'config.ini')
-    else:
-        return os.path.expanduser('~/.gptautocli.config')
+    return os.path.expanduser('~/.gptautocli.config')
 
 config_path = get_config_path()
 config = configparser.ConfigParser()
@@ -52,18 +48,13 @@ class ConfigHandler:
         
         if 'OpenAI_API_Key' not in config['DEFAULT']:
             # Determine the prompt message based on the operating system
-            if platform.system() == 'Windows':
-                prompt_message = (
-                    "gptautocli requires a valid OpenAI API key (which will not be shared with anyone) to function. \n"
-                    "Please add your key to the config file located at %APPDATA%\\gptautocli\\config.ini and restart the program or enter it here"
-                )
-            else:
-                prompt_message = (
-                    "gptautocli requires a valid OpenAI API key (which will not be shared with anyone) to function. \n"
-                    "Please add your key to ~/.gptautocli.config and restart the program or enter it here"
-                )
             
-            api_key = self.user_interface.dialog(prompt_message, secure=True)
+            prompt_message = (
+                "gptautocli requires a valid OpenAI API key (which will not be shared with anyone) to function. \n"
+                "Please add your key to ~/.gptautocli.config and restart the program or enter it here"
+            )
+            
+            api_key = self.user_interface.dialog(prompt_message)
             
             # Confirm that the key works
             client = OpenAI(api_key=api_key)
@@ -71,9 +62,11 @@ class ConfigHandler:
                 if self.test_client(client):
                     self.user_interface.info("API key verified successfully.")
                 else:
+                    self.user_interface.error("You entered: " + api_key)
                     self.user_interface.error("API key verification failed. Please check your API key and try again.")
                     exit(1)
             except Exception as e:
+                self.user_interface.error("You entered: " + api_key)
                 self.user_interface.error("API key verification failed. Please check your API key and try again.")
                 print(f"Error: {type(e).__name__}, {str(e)}")
                 exit(1)
