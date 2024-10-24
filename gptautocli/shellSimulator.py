@@ -19,7 +19,7 @@ class ShellSession:
         # make sure the command does not include ``` bash or ```shell
         return "Yes"
     # to be implemented by the child classes
-    def run_command(self, command):
+    def run_command(self, command, dangerouslyDisplayFullOutput=False):
         pass
     def close(self):
         pass
@@ -41,7 +41,7 @@ class LinuxOrMacShellSession(ShellSession):
         os.close(slave)
     
 
-    def run_command(self, command):
+    def run_command(self, command, dangerouslyDisplayFullOutput=False):
         # check if the command is allowed
         if self.is_command_allowed(command) != "Yes":
             return self.is_command_allowed(command)
@@ -101,8 +101,9 @@ class LinuxOrMacShellSession(ShellSession):
 
         result = '\n'.join(output).strip()
         # limit the output to 1000 characters
-        if len(result) > 1000:
-            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:]  # TODO: add a way to display the full output
+        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
+            x = str(len(result) - 1000)
+            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
         return result
 
     def close(self):
@@ -125,7 +126,7 @@ class WindowsShellSession(ShellSession):
             text=True
         )
 
-    def run_command(self, command):
+    def run_command(self, command, dangerouslyDisplayFullOutput=False):
         # Check if the command is allowed
         command_status = self.is_command_allowed(command)
         if command_status != "Yes":
@@ -149,8 +150,9 @@ class WindowsShellSession(ShellSession):
         
         result = ''.join(output)
         # limit the output to 1000 characters
-        if len(result) > 1000:
-            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:] # TODO: add a way to display the full output
+        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
+            x = str(len(result) - 1000)
+            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
         return result
 
     def close(self):

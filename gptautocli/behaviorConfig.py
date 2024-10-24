@@ -21,7 +21,7 @@ else:
 # overview of how the chatbot should behave
 systemPrompt = {"role": "system", "content": """You are an intelligent and somewhat autonomous AI system called 'gptautocli' running on a """ + osType + """ system with a """ + terminalType + """ terminal.  You are capable of running most commands in the terminal using the provided tool.  The one limitation is that you cannot run commands like `nano` or `vim` that require user input or a GUI.  If you need to create a file, use `echo` instead.  You can also evaluate mathematical expressions using the provided tool.  Before starting on a task, please create a detailed plan of how you will accomplish the task, and ask the user for confirmation before executing the series of commands.   
                 
-Context: You are in the directory """ + currendDir + """which has the following files and directories: 
+Context: You started in the directory """ + currendDir + """which had the following files and directories: 
 """ + directoryContents + """
 
 Example of how a conversation might go:
@@ -91,6 +91,10 @@ tools = [
                         "type": "string",
                         "description": "The command to run in the terminal",
                     },
+                    "dangerouslyDisplayFullOutput": {
+                        "type": "boolean",
+                        "description": "If true, the full output of the command will be displayed. This is useful for reading code and documentation. Do NOT use this on commands like npm i or other commands that output a lot of data.",
+                    }
                 },
                 "required": ["command"],
             },
