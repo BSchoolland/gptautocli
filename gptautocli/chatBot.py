@@ -5,6 +5,8 @@ import json
 from . import behaviorConfig
 from .shellSimulator import WindowsShellSession, LinuxOrMacShellSession
 
+from . import overwriteFileFunction
+
 class ChatBot:
     def __init__(self, user_interface, api_handler, riskAssessmentTool, model, history):
         self.user_interface = user_interface
@@ -78,6 +80,29 @@ class ChatBot:
                             "name": "run_command",
                             "content": function_result
                         })
+                    elif function_name == "overwrite_file":
+                        # Parse the JSON string into a dictionary
+                        arguments = json.loads(tool_call.function.arguments)
+                        filepath = arguments["filepath"]
+                        content = arguments["content"]
+                        ## error handling
+                        try:
+                            overwriteFileFunction.write_content_to_file(filepath, content)
+                            self.conversation_history.append({
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": "overwrite_file",
+                                "content": "File successfully overwritten"
+                            })
+                        except ValueError as e:
+                            self.conversation_history.append({
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": "overwrite_file",
+                                "content": str(e)
+                            })
+
+                        
                     else:
                         self.conversation_history.append({
                             "tool_call_id": tool_call.id,
