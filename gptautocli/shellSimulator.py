@@ -218,9 +218,10 @@ class WindowsShellSession(ShellSession):
                 break
 
         result = ''.join(output).strip()
-        # Limit output length
-        if len(result) > 1000:
-            result = result[:500] + "... content truncated to save tokens. ..." + result[-500:]
+        # limit the output to 1000 characters
+        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
+            x = str(len(result) - 1000)
+            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
         # Continue reading while the subprocess is running
         while True:
             line = self.process.stdout.readline()
@@ -231,10 +232,7 @@ class WindowsShellSession(ShellSession):
             output.append(line)
         
         result = ''.join(output)
-        # limit the output to 1000 characters
-        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
-            x = str(len(result) - 1000)
-            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
+        
         return result
 
     def close(self):
