@@ -17,10 +17,14 @@ config_path = get_config_path()
 config = configparser.ConfigParser()
 
 class RiskAssessment:
-    def __init__(self, user_interface, api_handler):
+    def __init__(self, user_interface, api_handler, risk_tolerance = -1):
         self.user_interface = user_interface
         self.api_handler = api_handler
-        self.risk_tolerance = int(self.get_risk_tolerance())
+        if risk_tolerance != -1:
+            self.risk_tolerance = risk_tolerance
+        else:
+            self.risk_tolerance = int(self.get_risk_tolerance())
+        print('Risk tolerance:', self.risk_tolerance)
         self.api_handler = apiHandler.ApiHandler(user_interface)
 
     def assess_risk(self, command):
