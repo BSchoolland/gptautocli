@@ -31,6 +31,8 @@ class ShellSession:
         pass
     def close(self):
         pass
+    def getCurrentDirectory(self):
+        pass
 
 class LinuxOrMacShellSession(ShellSession):
     def __init__(self, userInterface=None):
@@ -121,6 +123,8 @@ class LinuxOrMacShellSession(ShellSession):
         finally:
             os.close(self.master_fd)
             self.process.wait()
+    def getCurrentDirectory(self):
+        return self.run_command("pwd")
 
 
 class WindowsShellSession(ShellSession):
@@ -246,6 +250,9 @@ class WindowsShellSession(ShellSession):
             finally:
                 self.process.terminate()
                 self.process.wait()
+    
+    def getCurrentDirectory(self):
+        return self.run_command("cd")
 
 
 
