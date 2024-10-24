@@ -4,17 +4,16 @@ import json
 
 from . import behaviorConfig
 from .shellSimulator import WindowsShellSession, LinuxOrMacShellSession
-from . import riskAssessment
 
 class ChatBot:
-    def __init__(self, user_interface, api_handler, history):
+    def __init__(self, user_interface, api_handler, riskAssessmentTool, model, history):
         self.user_interface = user_interface
         self.api_handler = api_handler
         self.conversation_history = [ behaviorConfig.systemPrompt ] + history
         # get the client
         self.client = self.api_handler.get_client()
         # get the model
-        self.model = self.user_interface.get_LLM_model()
+        self.model = model
 
         self.tools = behaviorConfig.tools
         self.client = api_handler.get_client()
@@ -23,7 +22,7 @@ class ChatBot:
         # fixme: get this from somewhere else
         osType = behaviorConfig.get_os_type()
         self.shell = WindowsShellSession(user_interface) if osType == "Windows" else LinuxOrMacShellSession(user_interface)
-        self.riskAssessmentTool = riskAssessment.RiskAssessment(user_interface, api_handler)
+        self.riskAssessmentTool = riskAssessmentTool
 
 
     def conversation_loop(self):

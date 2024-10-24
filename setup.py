@@ -1,11 +1,16 @@
 from setuptools import setup, find_packages
 
+with open("VERSION") as f:
+    version = f.read().strip()
+
 with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
+
+
 setup(
     name="gptautocli", 
-    version="0.1.3",
+    version=version,
     author="Benjamin Schoolland",
     author_email="bschoolland@gmail.com",
     description="Provides a conversational interface to the terminal, allowing users to run commands and perform tasks using natural language. ",

@@ -13,24 +13,29 @@ class UserInterface:
         self.model = None
         self.inProgress = False
 
-    def welcome(self):
+    def welcome(self, model, risk_tolerance):
         osType = get_os_type()
-        # choose a model
-        print(f"{Style.BRIGHT}Choose a model to use: {Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}1. gpt-4o-mini{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}2. gpt-4o{Style.RESET_ALL}")
-        if input("Enter the number of the model you want to use: ") == "2":
-            model = "gpt-4o"
-        else:
-            model = "gpt-4o-mini"
+
         # Disclaimer
         current_dir = os.getcwd()
-        print(f"{Fore.CYAN}Welcome to the AI terminal! {Style.RESET_ALL} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}")
+        if risk_tolerance >= 6:
+            risk_message = f"{Fore.RED}All commands will be executed without confirmation.{Style.RESET_ALL}"
+        elif risk_tolerance <= 0:
+            risk_message = f"{Fore.GREEN}All commands will require confirmation before execution.{Style.RESET_ALL}"
+        else:
+            risk_message = f"{Fore.YELLOW}Commands with a risk score above {risk_tolerance} will require confirmation before execution.{Style.RESET_ALL}"
+        
+        print(f"{Fore.CYAN}Welcome to gptautocli! {Style.RESET_ALL} \n  Using model: {model} \n  Current directory: {current_dir}\n  Detected OS: {osType}\n  {risk_message}")
         self.model = model
+    
     def riskConfirmation(self, command, risk_score):
         choice = ''
-        if risk_score == 5:
+        if risk_score >= 5:
+            choice = input(Fore.MAGENTA + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
+        elif risk_score >= 4:
             choice = input(Fore.RED + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
+        elif risk_score == 1:
+            choice = input(Fore.GREEN + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
         else:
             choice = input(Fore.YELLOW + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
         return choice.lower() == "y"
@@ -56,10 +61,8 @@ class UserInterface:
         print(Fore.CYAN + message + Style.RESET_ALL)
 
     def chatBotMessage(self, message):
-        if self.model == "gpt-4o":
-            print(Fore.GREEN + "ChatGPT-4o: " + Style.RESET_ALL + message)
-        else:
-            print(Fore.YELLOW + "ChatGPT-4o-mini: " + Style.RESET_ALL + message)
+
+        print(Fore.GREEN + self.model + ": "+ Style.RESET_ALL + message)
 
     def dialog(self, message, secure=False):
         if not secure:
