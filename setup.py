@@ -13,7 +13,7 @@ setup(
     version=version,
     author="Benjamin Schoolland",
     author_email="bschoolland@gmail.com",
-    description="Provides a conversational interface to the terminal, allowing users to run commands and perform tasks using natural language. ",
+    description="Provides a conversational interface to the terminal, allowing you to run commands and perform tasks using natural language.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/BSchoolland/gptautocli",

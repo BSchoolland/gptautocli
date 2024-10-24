@@ -166,11 +166,11 @@ Example: touch myfile.txt - creates a file if it does not exist, but will not ov
 3 - Low Risk: Commands that alter files or locations, risky as it causes a change to the system.
 Example: echo "text" >> myfile.txt - adds some data to the file
 
-4 - High Risk: Commands that can modify data or cause other problems, leading to data loss on serious inconvenience if used wrongly.
-Example: echo "text" > myfile.txt - if important info is in myfile.txt data could be lost
+4 - High Risk: Commands that can modify data or cause other problems, leading to some data loss or serious inconvenience if used wrongly.
+Example: rm myfile.txt - Deletes a file, leading to data loss if the wrong file is targeted
 
-5 - Critical Risk (Accident-Prone): Commands that can cause severe system-wide damage or data loss if accidentally misused, often with no recovery option.
-Example: dd if=/dev/zero of=/dev/sda - Overwrites a disk, leading to total data loss if the wrong device is targeted.
+5 - Critical Risk (Accident-Prone): Commands that can cause severe damage or data loss if accidentally misused, often with no recovery option.
+Example: rm -rf /Projects - Deletes all files in a likely important directory, leading to data loss
 
 The user is going to provide a command.  Your output should be in this exact format:
 
