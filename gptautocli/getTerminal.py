@@ -4,7 +4,6 @@ import os
 import platform
 
 def get_terminal_type():
-    print('platform.system():', platform.system())
     # Check for terminal types on Linux
     if platform.system() == 'Linux':
         if os.path.exists('/usr/bin/gnome-terminal'):

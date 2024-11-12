@@ -19,8 +19,12 @@ def write_content_to_file(filepath: str, content: str) -> None:
     # Construct the absolute file path
     file_path = os.path.abspath(filepath)
     
+    # Ensure the directory exists
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
     # Write content to the file
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(content)
     
-    print(f"Content written to {file_path}.")

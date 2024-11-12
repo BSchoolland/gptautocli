@@ -24,7 +24,6 @@ class RiskAssessment:
             self.risk_tolerance = risk_tolerance
         else:
             self.risk_tolerance = int(self.get_risk_tolerance())
-        print('Risk tolerance:', self.risk_tolerance)
         self.api_handler = apiHandler.ApiHandler(user_interface)
 
     def assess_risk(self, command):
