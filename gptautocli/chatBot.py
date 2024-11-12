@@ -87,12 +87,16 @@ class ChatBot:
                         content = arguments["content"]
                         ## error handling
                         try:
-                            overwriteFileFunction.write_content_to_file(filepath, content)
+                            if self.riskAssessmentTool.assess_overwrite_risk(filepath, content):
+                                response_overwrite = overwriteFileFunction.write_content_to_file(filepath, content)
+                            else:
+                                response_overwrite = "USER INTERRUPT: The user denied this overwrite, ask them why and what they would prefer to do instead."
+                                
                             self.conversation_history.append({
                                 "tool_call_id": tool_call.id,
                                 "role": "tool",
                                 "name": "overwrite_file",
-                                "content": "File successfully overwritten"
+                                "content": response_overwrite
                             })
                         except ValueError as e:
                             self.conversation_history.append({
@@ -110,5 +114,6 @@ class ChatBot:
                             "name": function_name,
                             "content": "Tool not implemented"
                         })
+        
         self.user_interface.chatBotMessage(response_message)
         

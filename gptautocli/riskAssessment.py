@@ -57,7 +57,16 @@ class RiskAssessment:
                 return True
             else:
                 return self.user_interface.riskConfirmation(command, risk_score)
-    
+    def assess_overwrite_risk(self, filepath, content):
+        if self.risk_tolerance == 6:
+            return True
+        else:
+            risk_score = 4
+            if risk_score < self.risk_tolerance:
+                return True
+            else:
+                return self.user_interface.riskConfirmation("overwrite file at " + filepath + " with content: \n" + content, risk_score)
+        
     def get_risk_tolerance(self):
         config.read(config_path)
         if 'command_risk' in config['DEFAULT']:
