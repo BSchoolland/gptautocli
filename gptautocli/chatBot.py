@@ -91,7 +91,7 @@ class ChatBot:
                                 response_overwrite = overwriteFileFunction.write_content_to_file(filepath, content)
                             else:
                                 response_overwrite = "USER INTERRUPT: The user denied this overwrite, ask them why and what they would prefer to do instead."
-                                
+                            
                             self.conversation_history.append({
                                 "tool_call_id": tool_call.id,
                                 "role": "tool",
@@ -105,8 +105,7 @@ class ChatBot:
                                 "name": "overwrite_file",
                                 "content": str(e)
                             })
-
-                        
+                    
                     else:
                         self.conversation_history.append({
                             "tool_call_id": tool_call.id,
@@ -116,4 +115,3 @@ class ChatBot:
                         })
         
         self.user_interface.chatBotMessage(response_message)
-        

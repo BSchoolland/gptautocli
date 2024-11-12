@@ -110,6 +110,12 @@ To set up the project in a development environment, follow these steps:
     pip install --editable .
     ```
 
+6. **How I upload to PyPI**:
+    ```bash
+    python setup.py sdist bdist_wheel
+    twine upload dist/*
+    ```
+
 From here, you can run the package as if you had installed it from pip normally, except that any changes you make to the code will be reflected in the package.
 
 
