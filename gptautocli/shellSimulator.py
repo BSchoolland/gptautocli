@@ -4,6 +4,8 @@ import select
 import time
 import sys
 import selectors
+import getpass
+
 
 import sys
 from . import behaviorConfig
@@ -51,6 +53,8 @@ class LinuxOrMacShellSession(ShellSession):
         os.close(slave)
     
 
+    import getpass
+
     def run_command(self, command, dangerouslyDisplayFullOutput=False):
         # check if the command is allowed
         if self.is_command_allowed(command) != "Yes":
@@ -70,25 +74,33 @@ class LinuxOrMacShellSession(ShellSession):
             for ready_input in r:
                 if ready_input == self.master_fd:
                     response = os.read(self.master_fd, 1024).decode('utf-8')
-                    # Break the command up into lines
-                    responses = response.split("\r\n")
-                    for response in responses:
-                        
-                        if end_tag in response and command not in response:
-                            # Command output finished
+                    
+                    # Check if sudo is asking for password
+                    if "[sudo] password for " in response or "Password:" in response:
+                        try:
+                            password = getpass.getpass("")
+                            os.write(self.master_fd, (password + "\n").encode('utf-8'))
+                            continue
+                        except Exception as e:
+                            print("Error getting password:", str(e))
                             Done = True
                             break
-                        if first:
-                            # Skip the first line which is the prompt
-                            first = False
-                            continue
-                        elif command + "; echo " + end_tag in response:
-                            # Skip the command echo
-                            continue
-                        if self.userInterface:
-                            self.userInterface.commandResult(response)
-                        output.append(response)
-                        
+                    
+                    if end_tag in response and command not in response:
+                        # Command output finished
+                        Done = True
+                        break
+                    if first:
+                        # Skip the first chunk which contains the prompt
+                        first = False
+                        continue
+                    elif command + "; echo " + end_tag in response:
+                        # Skip the command echo
+                        continue
+                    
+                    if self.userInterface:
+                        self.userInterface.commandResult(response)
+                    output.append(response)
 
                 elif ready_input == sys.stdin:
                     # Read from stdin (user input)
@@ -109,7 +121,7 @@ class LinuxOrMacShellSession(ShellSession):
             if self.process.poll() is not None:
                 break
 
-        result = '\n'.join(output).strip()
+        result = ''.join(output)  # Changed from '\n'.join to preserve all original formatting
         # limit the output to 1000 characters
         if len(result) > 1000 and not dangerouslyDisplayFullOutput:
             x = str(len(result) - 1000)

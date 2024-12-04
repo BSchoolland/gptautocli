@@ -86,7 +86,6 @@ class UserInterface:
         print('Command: ' + input)
 
     def commandResult(self, output):
-        # if the otput ends with a newline, remove it
-        if output.endswith("\n"):
-            output = output[:-1]
-        print(output)
+        # If we receive a non-empty string, print it exactly as is, including any control characters
+        if output:
+            print(output, end='', flush=True)
