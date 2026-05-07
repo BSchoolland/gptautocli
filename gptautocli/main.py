@@ -41,7 +41,7 @@ def main():
             version = version_file.read().strip()
         print(f"gptautocli version {version}")
         sys.exit()
-    model_name = "gpt-4o"
+    model_name = "gpt-4.1"
 
     if args.model:
         model_name = args.model
