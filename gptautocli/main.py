@@ -46,7 +46,7 @@ def main():
         print(f"gptautocli version {get_version()}")
         sys.exit()
 
-    model_name = args.model if args.model else "gpt-4o"
+    model_name = args.model if args.model else "gpt-5.4-mini"
     risk_level = args.risk_level if args.risk_level is not None else -1
 
     user_interface = userInterface.UserInterface()
