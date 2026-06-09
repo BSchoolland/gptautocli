@@ -1,27 +1,31 @@
-# the system prompt that tells the AI what it is supposed to do
+# Builds the system prompt and tool definitions for the chatbot.
+
+import os
 
 from .getTerminal import get_os_type, get_terminal_type
 
-import os
-osType = get_os_type()
-terminalType = get_terminal_type()
-currentDir = os.getcwd()
-from .shellSimulator import LinuxOrMacShellSession, WindowsShellSession
 
-directoryContents = ""
-if osType == "Windows":
-    shellSession = WindowsShellSession()
-    directoryContents = shellSession.run_command("dir")
+def _directory_listing():
+    from .shellSimulator import LinuxOrMacShellSession, WindowsShellSession
+    if get_os_type() == "Windows":
+        shellSession = WindowsShellSession()
+        listing = shellSession.run_command("dir")
+    else:
+        shellSession = LinuxOrMacShellSession()
+        listing = shellSession.run_command("ls -a")
     shellSession.close()
-else:
-    shellSession = LinuxOrMacShellSession()
-    directoryContents = shellSession.run_command("ls -a")
-    shellSession.close()
+    return listing
 
-# overview of how the chatbot should behave
-systemPrompt = {"role": "system", "content": """You are an intelligent and somewhat autonomous AI system called 'gptautocli' running on a """ + osType + """ system with a """ + terminalType + """ terminal.  You are capable of running most commands in the terminal using the provided tool.  The one limitation is that you cannot run commands like `nano` or `vim` that require user input or a GUI.  If you need to create a file, use `echo` instead.  You can also evaluate mathematical expressions using the provided tool.  Before starting on a task, please create a detailed plan of how you will accomplish the task, and ask the user for confirmation before executing the series of commands.   
-                
-Context: You started in the directory """ + currentDir + """which had the following files and directories: 
+
+def get_system_prompt():
+    osType = get_os_type()
+    terminalType = get_terminal_type()
+    currentDir = os.getcwd()
+    directoryContents = _directory_listing()
+
+    content = """You are an intelligent and somewhat autonomous AI system called 'gptautocli' running on a """ + osType + """ system with a """ + terminalType + """ terminal.  You are capable of running most commands in the terminal using the provided tool.  The one limitation is that you cannot run commands like `nano` or `vim` that require user input or a GUI.  If you need to create a file, use `echo` instead.  You can also evaluate mathematical expressions using the provided tool.  Before starting on a task, please create a detailed plan of how you will accomplish the task, and ask the user for confirmation before executing the series of commands.
+
+Context: You started in the directory """ + currentDir + """which had the following files and directories:
 """ + directoryContents + """
 
 Example of how a conversation might go:
@@ -49,7 +53,7 @@ You: run_command(cd node-server)
 You: run_command(npm init -y)
 You: run_command(npm install express)
 You: run_command(npm install cors)
-You: overwrite_file("""+currentDir+"""/node-server/server.js
+You: overwrite_file(""" + currentDir + """/node-server/server.js
 , `
 const express = require("express");
 const cors = require("cors");
@@ -75,7 +79,7 @@ app.listen(port, () => {
     console.log(`Server is running http://localhost:${port}`);
 });
 `)
-You: overwrite_file("""+currentDir+"""/node-server/index.html
+You: overwrite_file(""" + currentDir + """/node-server/index.html
 , `
 <!DOCTYPE html>
 <html lang="en">
@@ -106,7 +110,8 @@ You: run_command(node server.js)
 Tool: Server is running on http://localhost:3000
 You: The Node.js server is now running. You can access the webpage at http://localhost:3000/index.html in your web browser. When you click the button, it will make an API call to the server and display the message it receives from the server (Hello World!) in an alert.  Is there anything else you would like me to do?
 """
-}
+    return {"role": "system", "content": content}
+
 
 tools = [
     {
@@ -147,7 +152,7 @@ tools = [
                         "description": "The new content to write to the file",
                     },
                 },
-                "required": ["file", "content"],
+                "required": ["filepath", "content"],
             },
         }
     }
@@ -176,27 +181,5 @@ The user is going to provide a command.  Your output should be in this exact for
 
 [[Risk Assessment: min-max]]
 
-With min and max being the minimum and maximum risk levels of the command.  
+With min and max being the minimum and maximum risk levels of the command.
 """}
-
-# riskAssessmentTool = {
-#     "type": "function",
-#     "function": {
-#         "name": "riskAssessment",
-#         "description": "Call this function to provide a risk assessment of a command.",
-#         "parameters": {
-#             "type": "object",
-#             "properties": {
-#                 "minRisk": {
-#                     "type": "integer",
-#                     "description": "The minimum risk level of the command (1-5)",
-#                 },
-#                 "maxRisk": {
-#                     "type": "integer",
-#                     "description": "The maximum risk level of the command (1-5)",
-#                 },
-#             },
-#             "required": ["minRisk", "maxRisk"],
-#         },
-#     },
-# }

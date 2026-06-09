@@ -31,9 +31,5 @@ def get_terminal_type():
     else:
         return 'unknown'
 
-def is_powershell():
-    # Check if the shell is PowerShell
-    return 'pwsh' in os.getenv('SHELL', '').lower() or 'powershell' in os.getenv('SHELL', '').lower()
-
 def get_os_type():
     return platform.system()

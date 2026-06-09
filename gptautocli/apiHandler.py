@@ -1,6 +1,5 @@
 import configparser
 import os
-import platform
 from openai import OpenAI
 
 # Determine the appropriate config path based on the operating system
