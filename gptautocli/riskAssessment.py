@@ -1,8 +1,6 @@
 import configparser
 import os
 import platform
-from openai import OpenAI
-from . import apiHandler
 
 from .behaviorConfig import riskAssessmentPrompt
 
@@ -16,62 +14,58 @@ def get_config_path():
 config_path = get_config_path()
 config = configparser.ConfigParser()
 
+
+def parse_risk_score(response_message):
+    """Pull the risk level out of the classifier's reply (the highest digit it mentions).
+
+    Defaults to medium risk (3) when the classifier returns no usable number."""
+    risk_score = -1
+    for char in response_message:
+        if char.isdigit() and int(char) > risk_score:
+            risk_score = int(char)
+    if risk_score == -1:
+        return 3  # default to medium risk
+    return risk_score
+
+
 class RiskAssessment:
-    def __init__(self, user_interface, api_handler, risk_tolerance = -1):
+    def __init__(self, user_interface, api_handler, risk_tolerance=-1):
         self.user_interface = user_interface
         self.api_handler = api_handler
         if risk_tolerance != -1:
             self.risk_tolerance = risk_tolerance
         else:
             self.risk_tolerance = int(self.get_risk_tolerance())
-        self.api_handler = apiHandler.ApiHandler(user_interface)
 
     def assess_risk(self, command):
         if self.risk_tolerance == 6:
             return True
-        else:
-            # get the risk score 
-            messages = [
-                riskAssessmentPrompt,
-                {
-                    "role": "user", "content": command
-                }
-            ]
-            response = self.api_handler.get_client().chat.completions.create(
-                model='gpt-4o-mini',
-                messages=messages,
-            )
+        messages = [
+            riskAssessmentPrompt,
+            {"role": "user", "content": command}
+        ]
+        response = self.api_handler.get_client().chat.completions.create(
+            model='gpt-4o-mini',
+            messages=messages,
+        )
+        risk_score = parse_risk_score(response.choices[0].message.content)
 
-            # Get the response message
-            response_message = response.choices[0].message.content
-            risk_score = -1
-            # get the highest integer in the response message
-            for char in response_message:
-                if char.isdigit() and int(char) > risk_score:
-                    risk_score = int(char)
-            # catch case where risk assessment AI does not return a risk score
-            if risk_score == -1:
-                risk_score = 3 # default to medium risk
-            
-            if risk_score < self.risk_tolerance:
-                return True
-            else:
-                return self.user_interface.riskConfirmation(command, risk_score)
+        if risk_score < self.risk_tolerance:
+            return True
+        return self.user_interface.riskConfirmation(command, risk_score)
+
     def assess_overwrite_risk(self, filepath, content):
         if self.risk_tolerance == 6:
             return True
-        else:
-            risk_score = 4
-            if risk_score < self.risk_tolerance:
-                return True
-            else:
-                return self.user_interface.riskConfirmation("overwrite file at " + filepath + " with content: \n" + content, risk_score)
-        
+        risk_score = 4
+        if risk_score < self.risk_tolerance:
+            return True
+        return self.user_interface.riskConfirmation(
+            "overwrite file at " + filepath + " with content: \n" + content, risk_score)
+
     def get_risk_tolerance(self):
         config.read(config_path)
         if 'command_risk' in config['DEFAULT']:
             return config['DEFAULT']['command_risk']
         else:
             return 0
-
-    

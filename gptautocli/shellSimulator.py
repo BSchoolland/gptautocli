@@ -3,38 +3,49 @@ import subprocess
 import select
 import time
 import sys
-import selectors
 import getpass
 
+from .getTerminal import get_os_type
 
-import sys
-from . import behaviorConfig
-
-if behaviorConfig.get_os_type() == "Windows":
+if get_os_type() == "Windows":
     import msvcrt  # Only import msvcrt if running on Windows
+
+OUTPUT_CHAR_LIMIT = 1000
+DISALLOWED_COMMANDS = ["nano", "vi", "vim"]
+
+
+def truncate_output(result, dangerouslyDisplayFullOutput=False):
+    """Trim long command output to keep token usage down, keeping the head and tail."""
+    if dangerouslyDisplayFullOutput or len(result) <= OUTPUT_CHAR_LIMIT:
+        return result
+    truncated = len(result) - OUTPUT_CHAR_LIMIT
+    return f"{result[:500]}... {truncated} characters truncated to save tokens. ...{result[-500:]}"
+
 
 # parent class for all operating systems
 class ShellSession:
     def __init__(self, userInterface=None):
         self.userInterface = userInterface
         self.command_counter = 0
-    # same for all operating systems
-    def is_command_allowed(self, command):
-        # list of disallowed commands: nano, vi, vim FIXME: add windows and mac commands
-        disallowed_commands = ["nano", "vi", "vim"]
-        for disallowed_command in disallowed_commands:
+
+    # same for all operating systems: returns an error string if the command is
+    # blocked, or None if it is allowed to run.
+    def command_block_reason(self, command):
+        for disallowed_command in DISALLOWED_COMMANDS:
             if command.startswith(disallowed_command):
                 return f"TERMINAL ERROR: Command '{disallowed_command}' is not allowed. Please try using an alternative command ex: 'echo instead of nano'."
-        # make sure the command does not include ``` bash or ```shell
-        return "Yes"
-    
+        return None
+
     # to be implemented by the child classes
     def run_command(self, command, dangerouslyDisplayFullOutput=False):
-        pass
+        raise NotImplementedError
+
     def close(self):
-        pass
+        raise NotImplementedError
+
     def getCurrentDirectory(self):
-        pass
+        raise NotImplementedError
+
 
 class LinuxOrMacShellSession(ShellSession):
     def __init__(self, userInterface=None):
@@ -51,15 +62,12 @@ class LinuxOrMacShellSession(ShellSession):
         )
         self.master_fd = master
         os.close(slave)
-    
-
-    import getpass
 
     def run_command(self, command, dangerouslyDisplayFullOutput=False):
-        # check if the command is allowed
-        if self.is_command_allowed(command) != "Yes":
-            return self.is_command_allowed(command)
-            
+        block_reason = self.command_block_reason(command)
+        if block_reason:
+            return block_reason
+
         self.command_counter += 1  # Increment command counter
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
         # Send command
@@ -74,18 +82,13 @@ class LinuxOrMacShellSession(ShellSession):
             for ready_input in r:
                 if ready_input == self.master_fd:
                     response = os.read(self.master_fd, 1024).decode('utf-8')
-                    
+
                     # Check if sudo is asking for password
                     if "[sudo] password for " in response or "Password:" in response:
-                        try:
-                            password = getpass.getpass("")
-                            os.write(self.master_fd, (password + "\n").encode('utf-8'))
-                            continue
-                        except Exception as e:
-                            print("Error getting password:", str(e))
-                            Done = True
-                            break
-                    
+                        password = getpass.getpass("")
+                        os.write(self.master_fd, (password + "\n").encode('utf-8'))
+                        continue
+
                     if end_tag in response and command not in response:
                         # Command output finished
                         Done = True
@@ -97,14 +100,14 @@ class LinuxOrMacShellSession(ShellSession):
                     elif command + "; echo " + end_tag in response:
                         # Skip the command echo
                         continue
-                    
+
                     if self.userInterface:
                         self.userInterface.commandResult(response)
                     output.append(response)
 
                 elif ready_input == sys.stdin:
                     # Read from stdin (user input)
-                    userInput = input() 
+                    userInput = input()
                     if userInput == "":
                         userInput = "\n" # if the user just presses enter, send a newline
                     if userInput == "exit" or userInput == "quit" or userInput == "q":
@@ -122,11 +125,7 @@ class LinuxOrMacShellSession(ShellSession):
                 break
 
         result = ''.join(output)  # Changed from '\n'.join to preserve all original formatting
-        # limit the output to 1000 characters
-        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
-            x = str(len(result) - 1000)
-            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
-        return result
+        return truncate_output(result, dangerouslyDisplayFullOutput)
 
     def close(self):
         try:
@@ -135,6 +134,7 @@ class LinuxOrMacShellSession(ShellSession):
         finally:
             os.close(self.master_fd)
             self.process.wait()
+
     def getCurrentDirectory(self):
         return self.run_command("pwd")
 
@@ -154,56 +154,46 @@ class WindowsShellSession(ShellSession):
         )
 
     def run_command(self, command, dangerouslyDisplayFullOutput=False):
-        # Check if the command is allowed
-        command_status = self.is_command_allowed(command)
-        if command_status != "Yes":
-            return command_status
+        block_reason = self.command_block_reason(command)
+        if block_reason:
+            return block_reason
 
         self.command_counter += 1
         end_tag = f"COMMAND_DONE_TAG{self.command_counter}"
-        
+
         # Send the command
-        try:
-            self.process.stdin.write(f"{command}\n")
-            self.process.stdin.write(f"echo {end_tag}\n")
-            self.process.stdin.flush()
-        except IOError:
-            return "Error: Failed to send command to process"
+        self.process.stdin.write(f"{command}\n")
+        self.process.stdin.write(f"echo {end_tag}\n")
+        self.process.stdin.flush()
 
         output = []
         command_output_started = False
         Done = False
 
         while not Done:
-            # Use a small timeout to avoid busy waiting
-            try:
-                line = self.process.stdout.readline()
-                if not line:
-                    Done = True
-                    break
-                    
-                # Skip command echo and empty lines at the start
-                if not command_output_started:
-                    if command in line or not line.strip():
-                        continue
-                    command_output_started = True
-                    
-                if end_tag in line:
-                    Done = True
-                    break
-                    
-                if self.userInterface:
-                    self.userInterface.commandResult(line.rstrip())
-                output.append(line)
-
-            except IOError:
+            line = self.process.stdout.readline()
+            if not line:
                 Done = True
                 break
+
+            # Skip command echo and empty lines at the start
+            if not command_output_started:
+                if command in line or not line.strip():
+                    continue
+                command_output_started = True
+
+            if end_tag in line:
+                Done = True
+                break
+
+            if self.userInterface:
+                self.userInterface.commandResult(line.rstrip())
+            output.append(line)
 
             # Check for user input (non-blocking)
             if msvcrt.kbhit():
                 char = msvcrt.getwche()  # Use getwche for better Unicode support
-                
+
                 # Handle special cases
                 if char == '\r':  # Enter key
                     print()  # New line after enter
@@ -221,12 +211,8 @@ class WindowsShellSession(ShellSession):
                     self.process.stdin.flush()
                 else:
                     # Send regular character input
-                    try:
-                        self.process.stdin.write(char)
-                        self.process.stdin.flush()
-                    except IOError:
-                        Done = True
-                        break
+                    self.process.stdin.write(char)
+                    self.process.stdin.flush()
 
             # Check if process has terminated
             if self.process.poll() is not None:
@@ -234,22 +220,7 @@ class WindowsShellSession(ShellSession):
                 break
 
         result = ''.join(output).strip()
-        # limit the output to 1000 characters
-        if len(result) > 1000 and not dangerouslyDisplayFullOutput:
-            x = str(len(result) - 1000)
-            result = result[:500] + "... " + x + " characters truncated to save tokens. ..." + result[-500:]
-        # Continue reading while the subprocess is running
-        while True:
-            line = self.process.stdout.readline()
-            if not line:
-                break  # No more output
-            if end_tag in line:
-                break  # Command output finished
-            output.append(line)
-        
-        result = ''.join(output)
-        
-        return result
+        return truncate_output(result, dangerouslyDisplayFullOutput)
 
     def close(self):
         if self.process:
@@ -257,16 +228,12 @@ class WindowsShellSession(ShellSession):
                 self.process.stdin.write("exit\n")
                 self.process.stdin.flush()
                 time.sleep(1)  # Give time for the exit command to process
-            except:
-                pass  # Ignore errors during cleanup
             finally:
                 self.process.terminate()
                 self.process.wait()
-    
+
     def getCurrentDirectory(self):
         return self.run_command("cd")
-
-
 
 
 if __name__ == '__main__':

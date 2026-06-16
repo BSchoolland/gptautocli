@@ -40,9 +40,6 @@ class UserInterface:
             choice = input(Fore.YELLOW + f"Risk score of {risk_score} detected for command: {command}.  Proceed? (y/n): " + Style.RESET_ALL)
         return choice.lower() == "y"
 
-    def choose_chat_history(self, history):
-        return []
-
     def get_user_input(self):
         input_text = input(Fore.CYAN + "You: " + Style.RESET_ALL)
         # make sure the input is not empty
@@ -51,9 +48,6 @@ class UserInterface:
             input_text = input(Fore.CYAN + "You: " + Style.RESET_ALL)
         return input_text
 
-    def get_LLM_model(self):
-        return self.model
-    
     def error(self, message):
         print(Fore.RED + message + Style.RESET_ALL)
 
@@ -71,7 +65,7 @@ class UserInterface:
             # use getpass to hide the input
             return getpass.getpass(message + ": ")
         
-    def isInProgess(self):
+    def is_in_progress(self):
         return self.inProgress
     
     def inProgressStart(self, function_name, arguments):
